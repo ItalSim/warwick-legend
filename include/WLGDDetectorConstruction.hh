@@ -67,6 +67,7 @@ public:
   void  SetTurbineAndTubeLength(G4double length);
   void  SetTurbineAndTubeAngle(G4double deg);
   void  SetTurbineAndTubeWidth(G4double width);
+  void  SetPolygonShieldNSides(G4int sides);
   void  SetTurbineAndTubeHeight(G4double height);
   void  SetTurbineAndTubezPosition(G4double zPosition);
   void  SetTurbineAndTubeNPanels(G4double nPanels);
@@ -110,6 +111,7 @@ private:
   G4double                fBoratedTurbineLength    = 50.0;
   G4double                fBoratedTurbineAngle     = 45.0;
   G4double                fBoratedTurbineWidth     = 5.0;
+  G4int                   shieldnsides             = 12;
   G4double                fBoratedTurbineHeight    = 600.;
   G4double                fBoratedTurbinezPosition = 0.;
   G4int                   fNPanels;
@@ -123,6 +125,8 @@ private:
   G4Material*             CombinedArXeHe3;
   G4Material*             water;
   G4Material*             larMat;
+  G4Material*             GadoliniumOxide;
+  G4Material*             GdDopedPMMA;
 };
 
 #endif

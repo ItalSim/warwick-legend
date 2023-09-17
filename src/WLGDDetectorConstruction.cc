@@ -116,7 +116,7 @@ void WLGDDetectorConstruction::DefineMaterials()
   BoratedPET->AddElement(O, 0.222);
 
   // Estimated using the number of elements per chain elements  (C_5 O_2 H_8)
-  auto* PMMA = new G4Material("PMMA", 1.18 * g / cm3, 3);
+  auto* PMMA = new G4Material("PMMA", 1.18 * g / cm3, 3, kStateSolid, 87.0*kelvin);
   PMMA->AddElement(H, 0.08);
   PMMA->AddElement(C, 0.60);
   PMMA->AddElement(O, 0.32);
@@ -237,6 +237,21 @@ void WLGDDetectorConstruction::DefineMaterials()
   PMMA381percentPolyGd->AddMaterial(PMMA,   0.9619);
   PMMA381percentPolyGd->AddMaterial(PolyGd, 0.0381);
 
+  //~Add gadolinium oxide material
+  GadoliniumOxide = new G4Material("GadoliniumOxide",7.41 * g / cm3, 2);
+  GadoliniumOxide->AddElement(elGd,0.868);
+  GadoliniumOxide->AddElement(O,0.132);
+
+  //Add Gd2O3 doped PMMA
+  //A 5 mm coating of Gd2O3 is 5% of the shield thickness
+  //However, Gd2O3 is MUCH denser than PMMA... Over 6 times as dense
+  //As an easy approximation, let's make the shield 30% Gd2O3 by mass fraction, then
+  //(0.3*7.41 + 0.7*1.18) = 3.049 density
+  
+  GdDopedPMMA = new G4Material("GDDopedPMMA", 3.049 * g / cm3, 2);
+  GdDopedPMMA->AddMaterial(PMMA,0.7);
+  GdDopedPMMA->AddMaterial(GadoliniumOxide,0.3);
+  
   
   // Estimated using the number of elements per molecule (C_2 H_4)
   auto* PolyEthylene = new G4Material("PolyEthylene", 0.95 * g / cm3, 2);
@@ -308,9 +323,12 @@ void WLGDDetectorConstruction::DefineMaterials()
       G4cout << "dComb:   " << dComb << G4endl;
       G4cout << "___________________________________________" << G4endl;
     }
-  
+  G4Material* mat_Ar = nistManager->FindOrBuildMaterial("G4_Ar");
   //auto* eLAr = new G4Element("LAr", "Ar", 18., 39.95 * g / mole);
-  larMat = G4Material::GetMaterial("G4_lAr");
+  larMat = new G4Material("G4_lAr", 1.3954*g/cm3, 1, kStateLiquid, 87.0*kelvin, 1.0*bar);
+  larMat->AddMaterial(mat_Ar,1);
+	
+	//~	G4Material::GetMaterial("G4_lAr");
   auto*      eLXe   = new G4Element("LXe", "Xe", 54., 131.29 * g / mole);
   auto*      eHe3   = new G4Element("He3", "He3", 1);
   G4Isotope* iHe3   = new G4Isotope("He3", 2, 3);
@@ -1109,7 +1127,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       // placements
       if(fWithBoratedPET == 1)
 	new G4PVPlacement(nullptr, G4ThreeVector(ringrad * cm, 0., cushift * cm),
-			  fBoratedPETLogical_Tube, "BoratedPET_phys", fLarLogical, false, 0,
+			  fBoratedPETLogical_Tube, "Shield_phys", fLarLogical, false, 0,
 			  true);
       
       if(fWithOutCupperTubes == 0)
@@ -1122,7 +1140,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       // tower 2
       if(fWithBoratedPET == 1)
 	new G4PVPlacement(nullptr, G4ThreeVector(0., ringrad * cm, cushift * cm),
-			  fBoratedPETLogical_Tube, "BoratedPET_phys2", fLarLogical, false,
+			  fBoratedPETLogical_Tube, "Shield_phys2", fLarLogical, false,
 			  1, true);
       
       if(fWithOutCupperTubes == 0)
@@ -1135,7 +1153,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       // tower 3
       if(fWithBoratedPET == 1)
 	new G4PVPlacement(nullptr, G4ThreeVector(-ringrad * cm, 0., cushift * cm),
-			  fBoratedPETLogical_Tube, "BoratedPET_phys3", fLarLogical, false,
+			  fBoratedPETLogical_Tube, "Shield_phys3", fLarLogical, false,
 			  2, true);
       
       if(fWithOutCupperTubes == 0)
@@ -1148,7 +1166,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       // tower 4
       if(fWithBoratedPET == 1)
 	new G4PVPlacement(nullptr, G4ThreeVector(0., -ringrad * cm, cushift * cm),
-			  fBoratedPETLogical_Tube, "BoratedPET_phys4", fLarLogical, false,
+			  fBoratedPETLogical_Tube, "Shield_phys4", fLarLogical, false,
 			  3, true);
       
       if(fWithOutCupperTubes == 0)
@@ -1165,7 +1183,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       // placements
       if(fWithBoratedPET == 1)
 	new G4PVPlacement(nullptr, G4ThreeVector(0., 0., cushift * cm),
-			  fBoratedPETLogical_Tube, "BoratedPET_phys", fLarLogical, false, 0,
+			  fBoratedPETLogical_Tube, "Shield_phys", fLarLogical, false, 0,
 			  true);
       
       if(fWithOutCupperTubes == 0)
@@ -1194,7 +1212,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 	rotMat = new G4RotationMatrix;
 	rotMat->rotateZ(-(j + 1) * anglePanel + 90 * deg);
 	new G4PVPlacement(rotMat, G4ThreeVector(xpos, ypos, zpos), fBoratedPETLogical_Box,
-			  "BoratedPET_phys", fLarLogical, false, j, true);
+			  "Shield_phys", fLarLogical, false, j, true);
       }
   }
 #endif
@@ -1232,7 +1250,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 	  rotMat = new G4RotationMatrix;
 	  rotMat->rotateZ(-j * anglePanel + 90 * deg + constantAngle);
 	  new G4PVPlacement(rotMat, G4ThreeVector(xpos, ypos, zpos), fBoratedPETLogical_Box,
-                        "BoratedPET_phys", fLarLogical, false, j, true);
+                        "Shield_phys", fLarLogical, false, j, true);
 	}
 
       
@@ -1246,10 +1264,10 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 	  
 	  new G4PVPlacement(
 			    nullptr, G4ThreeVector(0, 0, fBoratedTurbinezPosition * cm - b_height - b_width),
-			    fBoratedPETLogical_Tube, "BoratedPET_phys", fLarLogical, false, 0, true);
+			    fBoratedPETLogical_Tube, "Shield_phys", fLarLogical, false, 0, true);
 	  new G4PVPlacement(
 			    nullptr, G4ThreeVector(0, 0, fBoratedTurbinezPosition * cm + b_height + b_width),
-			    fBoratedPETLogical_Tube, "BoratedPET_phys", fLarLogical, false, 0, true);
+			    fBoratedPETLogical_Tube, "Shield_phys", fLarLogical, false, 0, true);
 	}
     }
 #endif
@@ -1266,7 +1284,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       fBoratedPETLogical_Tube =
 	new G4LogicalVolume(boratedPETSolid_Tube, BoratedPETMat, "BoratedPET_Logical");
       
-      G4cout << "Total Mass of B-PE: "
+      G4cout << "Total Mass of shield: "
 	     << 3.141592653589 * b_height / cm *
 	     (pow(fBoratedTurbineRadius + b_width / cm * 2, 2) -
 	     pow(fBoratedTurbineRadius, 2)) *
@@ -1274,7 +1292,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 	     << G4endl;
 
       new G4PVPlacement(nullptr, G4ThreeVector(0, 0, fBoratedTurbinezPosition * cm),
-			fBoratedPETLogical_Tube, "BoratedPET_phys", fLarLogical, false, 0,
+			fBoratedPETLogical_Tube, "Shield_phys", fLarLogical, false, 0,
 			true);
       
       boratedPETSolid_Tube =
@@ -1285,12 +1303,100 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       
       new G4PVPlacement(
 			nullptr, G4ThreeVector(0, 0, fBoratedTurbinezPosition * cm - b_height - b_width),
-			fBoratedPETLogical_Tube, "BoratedPET_phys", fLarLogical, false, 0, true);
+			fBoratedPETLogical_Tube, "Shield_phys", fLarLogical, false, 0, true);
       new G4PVPlacement(
 			nullptr, G4ThreeVector(0, 0, fBoratedTurbinezPosition * cm + b_height + b_width),
-			fBoratedPETLogical_Tube, "BoratedPET_phys", fLarLogical, false, 0, true);
+			fBoratedPETLogical_Tube, "Shield_phys", fLarLogical, false, 0, true);
+      
     }//if(fWithBoratedPET == 3)
 
+
+  if(fWithBoratedPET == 5)
+    {
+      //For use with the LEGEND-1000 single reentrance tube design only
+      //Shield is made of a hollow n-sided prism, with a hole in the top for the reentrant tube
+      //The size of the hole is fixed, but everything else is set by the user, including n
+
+
+      //For each segment, make 3 basic trapezoids, flat on 4 sides
+      //The user inputs a 'radius' for the shield dimensions, but the polygon shield doesn't have a radius...
+      //Any regular polygon can be inscribed inside of a circle, so the radius is used as the radius of an inscribing circle
+      
+      //Formula for an inscribed regular polygon's side compared to the inscribed circle's radius:
+      //l = 2*r*sin(pi/n)
+
+      //All in meters
+      G4double shieldheight = fBoratedTurbineHeight/100;//Half-height
+      G4double shieldradius = fBoratedTurbineRadius/100;
+      G4double shieldthickness = fBoratedTurbineWidth/200;//Half-thickness
+      //shieldnsides is set by the user
+
+      //G4double shieldwedgeouterlength = shieldradius*std::sin(CLHEP::pi/shieldnsides);//Half-length
+      //G4double shieldwedgeinnerlength = (shieldradius-shieldthickness)*std::sin(CLHEP::pi/shieldnsides);//Half-length
+      G4double shieldwedgeouterlength = shieldradius*std::tan(CLHEP::pi/shieldnsides);//Half-length
+      G4double shieldwedgeinnerlength = (shieldradius-shieldthickness)*std::tan(CLHEP::pi/shieldnsides);//Half-length
+
+      //Piece of the shield's wall
+      G4Trd *shieldwedge = new G4Trd("shieldwedge",shieldheight*m,shieldheight*m,shieldwedgeouterlength*m,shieldwedgeinnerlength*m,shieldthickness*m);
+
+      G4LogicalVolume *shieldwedgelogical =
+        new G4LogicalVolume(shieldwedge, BoratedPETMat, "Shieldwedge_log");
+
+
+      //Piece of the shield's bottom, which should be the same thickness as the wall, and one end of the trapezoid tapers off to 0, making it a triangle
+      G4Trd *shieldbottompiece = new G4Trd("shieldbottompiece",shieldthickness*m,shieldthickness*m,shieldwedgeinnerlength*m,0*m,(shieldradius-shieldthickness)/2*m);
+
+      G4LogicalVolume *shieldbottompiecelogical =
+        new G4LogicalVolume(shieldbottompiece, BoratedPETMat, "Shieldbottompiece_log");
+
+ 
+      //The top is like the bottom, but the bottom pieces all combine to form a solid floor
+      //The top stops 1 meter short of the center because of the hole for the reentrance tube
+      //Since the trapezoid needs to be 1m shorter, we need to calculate the width of the shortest side, and we need to move its radial position back by 500 cm
+
+      //G4double shieldtopinnerlength = 1*std::sin(CLHEP::pi/shieldnsides);
+      G4double shieldtopinnerlength = 1*std::tan(CLHEP::pi/shieldnsides);
+
+      G4Trd *shieldtoppiece = new G4Trd("shieldtoppiece",shieldthickness*m,shieldthickness*m,shieldwedgeinnerlength*m,shieldtopinnerlength*m,(shieldradius-shieldthickness-1)/2*m);
+
+      G4LogicalVolume *shieldtoppiecelogical =
+        new G4LogicalVolume(shieldtoppiece, BoratedPETMat, "Shieldtoppiece_log");
+
+      
+      //Each piece needs to be rotated when it is placed
+      G4RotationMatrix *rotme;
+
+      
+      for(int i = 0; i < shieldnsides; i++)
+	{
+	  rotme  = new G4RotationMatrix(-(360/shieldnsides)*i*deg,90*deg,90*deg);
+
+	  //wall
+	  new G4PVPlacement(
+			    rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness)*m,
+						 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness)*m,
+						 fBoratedTurbinezPosition * cm - b_height - b_width),
+			    shieldwedgelogical, "Shield_phys", fLarLogical, false, 0, true);
+	  
+	  //bottom
+          new G4PVPlacement(
+			    rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness)/2*m,
+						 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness)/2*m,
+						 fBoratedTurbinezPosition * cm - b_height - b_width - shieldheight*m),
+			    shieldbottompiecelogical, "Shield_phys", fLarLogical, false, 0, true);
+	  //top
+          new G4PVPlacement(
+			    rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness+1)/2*m,
+						 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness+1)/2*m,
+						 fBoratedTurbinezPosition * cm - b_height
+						 - b_width + shieldheight*m),
+			    shieldtoppiecelogical, "Shield_phys", fLarLogical, false, 0, true);
+	  	  
+	}
+
+      
+    }//if(fWithBoratedPET == 5)      
+  
   //
   // Visualization attributes
   //
@@ -1760,6 +1866,13 @@ void WLGDDetectorConstruction::SetTurbineAndTubeWidth(G4double width)
   fBoratedTurbineWidth = width;
 }
 
+//Option to set the number of sides of the polygon moderator
+void WLGDDetectorConstruction::SetPolygonShieldNSides(G4int sides)
+{
+  shieldnsides = sides;
+}
+
+
 // option to set the angle of the turbine structure
 void WLGDDetectorConstruction::SetTurbineAndTubeAngle(G4double deg)
 {
@@ -1907,7 +2020,8 @@ void WLGDDetectorConstruction::DefineCommands()
     .SetGuidance("2 = with Neutron Moderators in turbine mode")
     .SetGuidance("3 = with Neutron Moderators in large tub")
     .SetGuidance("4 = with Neutron Moderators in turbine mode with lids")
-    .SetCandidates("0 1 2 3 4")
+    .SetGuidance("5 = with neutron moderator as an n-sided hollow polyhedron")
+    .SetCandidates("0 1 2 3 4 5")
     .SetDefaultValue("0");
 
   // option to include borated PE in the setup (1: tubes around the re-entrance tubes, 2:
@@ -1961,6 +2075,14 @@ void WLGDDetectorConstruction::DefineCommands()
     .SetDefaultValue("400")
     .SetToBeBroadcasted(false);
 
+  //Set the number of sides for the polygon shield
+    fDetectorMessenger
+      ->DeclareMethod("PolygonShieldNSides",
+                    &WLGDDetectorConstruction::SetPolygonShieldNSides)
+    .SetGuidance("If using the polyhedral neutron shield, set the number of sides")
+    .SetDefaultValue("12")
+    .SetToBeBroadcasted(false);
+  
   // option to set the radius of the turbine structure
   fDetectorMessenger
     ->DeclareMethod("TurbineAndTube_zPosition",
