@@ -176,7 +176,7 @@ Macros to controll the detector geometry
   - Cryostat_Height
   - Without_Cupper_Tubes
   - With_Gd_Water
-  - With_NeutronModerators (options: 0: [no moderators], 1: around re-entrance tubes, 2: in turbine mode, 3: in large hollow tube mode)
+  - With_NeutronModerators (options: 0: [no moderators], 1: around re-entrance tubes, 2: in turbine mode, 3: in large hollow tube mode, 5: n-sided hollow polyhedron shield)
   - Which_Material (options: [BoratedPE], PolyEthylene, PMMA plus additional options for doped PMMA can be found in src/WLGDDetectorConstruction.cc)
 - TurbineAndTube
     - Radius
@@ -184,6 +184,7 @@ Macros to controll the detector geometry
     - Height
     - zPosition
     - NPanels
+    - NSides (for polyhedral tube only)
 ```
 ### Bias Macro
 Macros to adjust the bias of the cross-sections

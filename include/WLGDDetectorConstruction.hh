@@ -83,6 +83,14 @@ public:
   // - adjust between original simulation position of detectors or updates ones
   void  SetPositionOfDetectors(G4String name);
 
+  //Optical
+  void SetupOpticalProperties(void);
+  double LArRefIndex(double LambdaE);
+  double LArRayLength(double LambdaE, double temperature);
+  double LArAbsLength(double LambdaE);
+  double LArScintSpec(double LambdaES);
+  double LArEpsilon(double lambda);
+  
 private:
   void DefineCommands();
   void DefineMaterials();
@@ -94,6 +102,7 @@ private:
   G4GenericMessenger*     fDetectorMessenger       = nullptr;
   G4GenericMessenger*     fBiasMessenger           = nullptr;
   G4GenericMessenger*     fMaterialMessenger       = nullptr;
+
   G4double                fvertexZ                 = -1.0;
   G4double                fmaxrad                  = -1.0;
   G4String                fGeometryName            = "baseline";
@@ -110,6 +119,7 @@ private:
   G4double                fBoratedTurbineLength    = 50.0;
   G4double                fBoratedTurbineAngle     = 45.0;
   G4double                fBoratedTurbineWidth     = 5.0;
+  G4int                   shieldnsides             = 12;
   G4double                fBoratedTurbineHeight    = 600.;
   G4double                fBoratedTurbinezPosition = 0.;
   G4int                   fNPanels;
@@ -120,9 +130,69 @@ private:
   G4int                   fWithGdWater           = 0;
   G4int                   fWithWoWater           = 0;
   G4int                   fMaGeMaterial          = 0;
+
+  G4Element*              H;
+  G4Element*              C;
+  G4Element*              N;
+  G4Element*              O;
+  G4Element*              F;
+  G4Element*              elS;
+  G4Element*              Mg;
+  G4Element*              Ca;
+  G4Element*              elGd;
+  G4Element*              SpecialB;
+  G4Element*              eGe;
+  G4Element*              elXe;
+  G4Element*              eHe3;
+  G4Element*              larEl;
+
+  G4Isotope*              B10;
+  G4Isotope*              B11;
+  G4Isotope*              Ge_70;
+  G4Isotope*              Ge_72;
+  G4Isotope*              Ge_73;
+  G4Isotope*              Ge_74;
+  G4Isotope*              Ge_76;
+  G4Isotope*              iHe3;
+  
+  G4Material*             stdRock;
+  G4Material*             puMat;
+  G4Material*             BoratedPET;
+  G4Material*             BoratedPETMat;
+  G4Material*             PMMA;
+  G4Material*             PMMA1percentB;
+  G4Material*             PMMA3percentB;
+  G4Material*             PMMA5percentB;
+  G4Material*             PMMA7percentB;
+  G4Material*             PMMA10percentB;
+  G4Material*             PMMA1percentGd;
+  G4Material*             PMMA3percentGd;
+  G4Material*             PMMA5percentGd;
+  G4Material*             PMMA7percentGd;
+  G4Material*             PMMA10percentGd;
+  G4Material*             PolyGd;
+  G4Material*             PMMA038percentPolyGd;
+  G4Material*             PMMA191percentPolyGd;
+  G4Material*             PMMA381percentPolyGd;
+
+  G4Material*             PolyEthylene;
+  G4Material*             gadoliniumSulfate;
+  G4Material*             purewater;
+  G4Material*             roiMat;
+  G4Material*             copperMat;
+  G4Material*             steelMat;
+  G4Material*             airMat;
+  G4Material*             worldMaterial;
+  G4Material*             larMat_alt;
+  G4Material*             waterMat;
   G4Material*             CombinedArXeHe3;
   G4Material*             water;
   G4Material*             larMat;
+  G4Material*             PEN;
+  G4Material*             TPB;
+  G4Material*             polystyrene;
+  G4Material*             tetratex;
+  
 };
 
 #endif
