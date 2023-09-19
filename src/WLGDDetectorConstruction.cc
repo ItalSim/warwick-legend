@@ -2003,8 +2003,25 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   PEN->SetMaterialPropertiesTable(PENTable);
 
 
-  
 
+  G4double PMMA_RefractiveIndex = 1.5;
+  G4double PMMA_AbsorptionLength = 2;
+
+  G4double PMMA_refraction[135];
+  G4double PMMA_absorption[135];
+
+  for(int i = 0; i < 135; i++)
+    {
+      PMMA_refraction[i] = PMMA_RefractiveIndex;
+      PMMA_absorption[i] = PMMA_AbsorptionLength;
+    }
+
+  auto PMMATable = new G4MaterialPropertiesTable();
+  PENTable->AddProperty("RINDEX",       PEN_absorption_wavelength, PMMA_refraction, 135);
+  PENTable->AddProperty("ABSLENGTH",    PEN_absorption_wavelength, PMMA_absorption, 135);
+
+
+  
 }//SetupOpticalProperties
 
 
