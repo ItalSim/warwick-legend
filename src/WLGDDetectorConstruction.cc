@@ -1398,6 +1398,28 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
         }
 
 
+      //If optics are enabled, add the light guide instrumentation
+
+      //The light guide consists of a parallelipiped made of plastic (most likely PMMA) coated in 0 to a few layers of cladding
+      //with one layer of WLS material on the outside
+
+      //The user can define the dimensions of the light guide, the thickness of the cladding (later), and the number of cladding layers
+      //The user can also define materials for the light guide+cladding, and the WLS coating
+
+
+      double lightguidex = 1*m;
+      double lightguidey = 1*cm;
+      double lightguidez = 10*cm;
+
+      G4Material *lightguidematerial = G4Material::GetMaterial("PMMA");
+
+      G4Box* lightguidesolid = new G4Box("lightguide", lightguidex, lightguidey, lightguidez);
+      G4LogicalVolume *lightguidelogical = new G4LogicalVolume(lightguidesolid,lightguidematerial,"lightguide_log");
+
+      new G4PVPlacement(nullptr, G4ThreeVector(0*m,2.3*m,0*m), lightguidelogical, "LightGuide_phys", fLarLogical, false, 0, true);
+
+
+
     }//if(fWithBoratedPET == 5)
 
   
@@ -2253,6 +2275,13 @@ void WLGDDetectorConstruction::SetTurbineAndTubeWidth(G4double width)
   fBoratedTurbineWidth = width;
 }
 
+//Option to set the number of sides of the polygon moderator
+void WLGDDetectorConstruction::SetPolygonShieldNSides(G4int sides)
+{
+  shieldnsides = sides;
+}
+
+
 // option to set the angle of the turbine structure
 void WLGDDetectorConstruction::SetTurbineAndTubeAngle(G4double deg)
 {
@@ -2389,9 +2418,9 @@ void WLGDDetectorConstruction::DefineCommands()
     .SetCandidates("0 1")
     .SetDefaultValue("0");
 
-  // option to include borated PE in the setup (1: tubes around the re-entrance tubes, 2:
+   // option to include borated PE in the setup (1: tubes around the re-entrance tubes, 2:
   // trubine structure)
-  fDetectorMessenger
+    fDetectorMessenger
     ->DeclareMethod("With_NeutronModerators",
                     &WLGDDetectorConstruction::SetNeutronModerator)
     .SetGuidance("Set whether to include Neutron Moderators or not")
@@ -2400,8 +2429,10 @@ void WLGDDetectorConstruction::DefineCommands()
     .SetGuidance("2 = with Neutron Moderators in turbine mode")
     .SetGuidance("3 = with Neutron Moderators in large tub")
     .SetGuidance("4 = with Neutron Moderators in turbine mode with lids")
-    .SetCandidates("0 1 2 3 4")
+    .SetGuidance("5 = with neutron moderator as an n-sided hollow polyhedron")
+    .SetCandidates("0 1 2 3 4 5")
     .SetDefaultValue("0");
+
 
   // option to include borated PE in the setup (1: tubes around the re-entrance tubes, 2:
   // trubine structure)

@@ -31,6 +31,7 @@ public:
   G4double GetBoratedTurbineLength() { return fBoratedTurbineLength; }
   G4double GetBoratedTurbineAngle() { return fBoratedTurbineAngle; }
   G4double GetBoratedTurbineWidth() { return fBoratedTurbineWidth; }
+  void  SetPolygonShieldNSides(G4int sides);
   G4double GetBoratedTurbineHeight() { return fBoratedTurbineHeight; }
   G4double GetBoratedTurbinezPosition() { return fBoratedTurbinezPosition; }
   G4int    GetBoratedTurbinezNPanels() { return fNPanels; }
