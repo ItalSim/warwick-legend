@@ -27,6 +27,7 @@
 #include "G4Threading.hh"
 #include "G4UImanager.hh"
 #include "G4RadioactiveDecayPhysics.hh"
+#include "G4OpticalPhysics.hh"
 #include "QGSP_BIC_HP.hh"
 #include "Shielding.hh"
 #include "QGSP_BIC.hh"
@@ -104,6 +105,8 @@ int main(int argc, char** argv)
 
     // -- set user physics list
     auto* physicsList = new Shielding;//new  QGSP_BERT_HP;//new Shielding;
+    G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
+    physicsList->RegisterPhysics(opticalPhysics);
 
     // allow for thermal neutrons to find Ge
     auto* neutronCut  = new G4NeutronTrackingCut(1);
