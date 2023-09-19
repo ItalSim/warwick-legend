@@ -22,7 +22,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
 
   // Create directories
   analysisManager->SetVerboseLevel(1);
-  analysisManager->SetNtupleMerging(false);
+  analysisManager->SetNtupleMerging(true);
 
   // -- write out some branches only if the information is also stored
 
@@ -30,7 +30,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   // Creating ntuple with vector entries
   //
   analysisManager->CreateNtuple("Score", "Hits");
-  analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
+  /*analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
   analysisManager->CreateNtupleIColumn("HitID", fEventAction->GetHitTID());
   analysisManager->CreateNtupleDColumn("Edep", fEventAction->GetHitEdep());
   analysisManager->CreateNtupleDColumn("Time", fEventAction->GetHitTime());
@@ -63,7 +63,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleIColumn("MunoVeto", fEventAction->GetMuonVeto_flag());
   analysisManager->CreateNtupleIColumn("isIC", fEventAction->GetisIC());
   analysisManager->CreateNtupleIColumn("isMetastable", fEventAction->GetisMetastable());
-
+  */
   analysisManager->CreateNtupleDColumn("Neutronxloc", fEventAction->GetNeutronxLoc());
   analysisManager->CreateNtupleDColumn("Neutronyloc", fEventAction->GetNeutronyLoc());
   analysisManager->CreateNtupleDColumn("Neutronzloc", fEventAction->GetNeutronzLoc());
@@ -79,14 +79,14 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
                                        fEventAction->GetNumberOfNeutronsInEvent());
   analysisManager->CreateNtupleDColumn("NeutronsMostOuterRadius",
                                        fEventAction->GetNeutronsMostOuterRadius());
+
+    //analysisManager->CreateNtupleDColumn("Neutronxtrack",
+    //fEventAction->GetNeutronxTrack());
+    //analysisManager->CreateNtupleDColumn("Neutronytrack",
+    //fEventAction->GetNeutronyTrack());
+    //analysisManager->CreateNtupleDColumn("Neutronztrack",
+    //fEventAction->GetNeutronzTrack());
   /*
-    analysisManager->CreateNtupleDColumn("Neutronxtrack",
-    fEventAction->GetNeutronxTrack());
-    analysisManager->CreateNtupleDColumn("Neutronytrack",
-    fEventAction->GetNeutronyTrack());
-    analysisManager->CreateNtupleDColumn("Neutronztrack",
-    fEventAction->GetNeutronzTrack());
-  */
   analysisManager->CreateNtupleDColumn("LArEnergyDeposition",
                                        fEventAction->GetLArEnergyDeposition());
   analysisManager->CreateNtupleDColumn("GeEnergyDeposition",
@@ -234,7 +234,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
                                          fEventAction->GetGdSiblings_type());
     analysisManager->CreateNtupleIColumn("GdSiblings_whichVolume",
                                          fEventAction->GetGdSiblings_whichVolume());
-  }
+  }*/
 
   // analysisManager->CreateNtupleDColumn("nCAr_timing", fEventAction->GetnCAr_timing());
   // analysisManager->CreateNtupleDColumn("nCAr_x", fEventAction->GetnCAr_x());
@@ -269,7 +269,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleIColumn("prod_parentType", fEventAction->Getprod_parentType());//prod_parentType
 
 
-  if(fIndividualGeDepositionInfo)
+  /*  if(fIndividualGeDepositionInfo)
   {
     analysisManager->CreateNtupleDColumn("Ge77mGammaEmission_timing",
                                          fEventAction->GetGe77mGammaEmission_timing());
@@ -306,8 +306,28 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleDColumn("Muon_WLSR_intersect_y", fEventAction->Get_Muon_WLSR_intersect_y());
   analysisManager->CreateNtupleDColumn("Muon_WLSR_intersect_z", fEventAction->Get_Muon_WLSR_intersect_z());
   analysisManager->CreateNtupleDColumn("Muon_WLSR_Edep", fEventAction->Get_Muon_WLSR_Edep());
-
+  */
   analysisManager->FinishNtuple();
+
+  //~
+
+  analysisManager->CreateNtuple("Steps","Step-level data");
+  
+  analysisManager->CreateNtupleDColumn("X");             //0
+  analysisManager->CreateNtupleDColumn("Y");             //1
+  analysisManager->CreateNtupleDColumn("Z");             //2
+  analysisManager->CreateNtupleDColumn("Time");          //3
+  analysisManager->CreateNtupleDColumn("KineticEnergy"); //4
+  analysisManager->CreateNtupleIColumn("TrackID");       //5
+  analysisManager->CreateNtupleIColumn("ID");            //6
+  analysisManager->CreateNtupleIColumn("PID");           //7
+  analysisManager->CreateNtupleSColumn("Process");       //8
+  analysisManager->CreateNtupleSColumn("CreatorProcess");//9
+  analysisManager->CreateNtupleSColumn("Material");      //10
+  analysisManager->CreateNtupleSColumn("Volume");        //11
+  
+  analysisManager->FinishNtuple();
+
 }
 
 WLGDRunAction::~WLGDRunAction() { delete G4AnalysisManager::Instance(); }

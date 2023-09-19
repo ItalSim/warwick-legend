@@ -185,6 +185,18 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     fParticleGun->SetParticleDefinition(particleTable->FindParticle("neutron"));
     fParticleGun->GeneratePrimaryVertex(event);
   }
+
+  if(fGenerator == "SimpleGammaGun"){
+    G4ThreeVector momentumDir(0, 0, -1);
+    fParticleGun->SetParticleMomentumDirection(momentumDir);
+    fParticleGun->SetParticleEnergy(2 * MeV);
+    fParticleGun->SetParticlePosition(G4ThreeVector(0*cm, 0*cm, -70*cm));
+    auto particleTable = G4ParticleTable::GetParticleTable();
+    fParticleGun->SetParticleDefinition(particleTable->FindParticle("gamma"));
+    fParticleGun->GeneratePrimaryVertex(event);
+  }
+
+  
   if(fGenerator == "MeiAndHume")
   {
     using pld_type = std::piecewise_linear_distribution<double>;
@@ -731,7 +743,7 @@ void WLGDPrimaryGeneratorAction::SetGenerator(const G4String& name)
 {
   std::set<G4String> knownGenerators = {
     "MeiAndHume",        "Musun",           "Ge77m", "Ge77andGe77m",
-    "ModeratorNeutrons", "ExternalNeutrons", "Musun_alternative", "SimpleNeutronGun"
+    "ModeratorNeutrons", "ExternalNeutrons", "Musun_alternative", "SimpleNeutronGun", "SimpleGammaGun"
   };
   if(knownGenerators.count(name) == 0)
   {
@@ -802,6 +814,7 @@ void WLGDPrimaryGeneratorAction::DefineCommands()
   fMessenger->DeclareMethod("setGenerator", &WLGDPrimaryGeneratorAction::SetGenerator)
     .SetGuidance("Set generator model of primary muons")
     .SetGuidance("SimpleNeutronGun = generate neutrons with zero energy at a certain location")
+    .SetGuidance("SimpleGammaGun = what it sounds like")
     .SetGuidance("MeiAndHume = WW standard case")
     .SetGuidance("Musun = Used in previous MaGe simulation")
     .SetGuidance("Musun_alternative = Alternative Musun input")
@@ -810,7 +823,7 @@ void WLGDPrimaryGeneratorAction::DefineCommands()
     .SetGuidance("ModeratorNeutrons = generate neutrons inside the neutron moderators")
     .SetGuidance("ExternalNeutrons = generate neutrons from outside the water tank")
     .SetCandidates(
-      "MeiAndHume Musun Musun_alternative Ge77m Ge77andGe77m ModeratorNeutrons ExternalNeutrons SimpleNeutronGun");
+      "MeiAndHume Musun Musun_alternative Ge77m Ge77andGe77m ModeratorNeutrons ExternalNeutrons SimpleNeutronGun SimpleGammaGun");
 
   fMessenger->DeclareMethod("SimpleNeutronGun_coord_x", &WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_coord_x)    
     .SetGuidance("Set the x coordinate for the neutron gun")
