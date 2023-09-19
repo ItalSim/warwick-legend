@@ -1411,7 +1411,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       double lightguidey = 1*cm;
       double lightguidez = 10*cm;
 
-      G4Material *lightguidematerial = G4Material::GetMaterial("PMMA");
+      G4Material *lightguidematerial = G4Material::GetMaterial("PolyGd");
 
       G4Box* lightguidesolid = new G4Box("lightguide", lightguidex, lightguidey, lightguidez);
       G4LogicalVolume *lightguidelogical = new G4LogicalVolume(lightguidesolid,lightguidematerial,"lightguide_log");
@@ -1498,7 +1498,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   fBoratedPETLogical_Tube->SetVisAttributes(testVisAtt4);
   fBoratedPETLogical_Box->SetVisAttributes(testVisAtt4);
 
-  SetupOpticalProperties();
+  //SetupOpticalProperties();
   
   return fWorldPhysical;
 
@@ -2476,6 +2476,15 @@ void WLGDDetectorConstruction::DefineCommands()
     .SetGuidance("Set the width of the borated PE pannels [cm]")
     .SetDefaultValue("5.0")
     .SetToBeBroadcasted(false);
+
+      //Set the number of sides for the polygon shield
+    fDetectorMessenger
+      ->DeclareMethod("PolygonShieldNSides",
+                    &WLGDDetectorConstruction::SetPolygonShieldNSides)
+    .SetGuidance("If using the polyhedral neutron shield, set the number of sides")
+    .SetDefaultValue("12")
+    .SetToBeBroadcasted(false);
+
 
   // option to set the radius of the turbine structure
   fDetectorMessenger
