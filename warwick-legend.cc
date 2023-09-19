@@ -179,12 +179,22 @@ int main(int argc, char** argv)
     //
     G4UImanager* UImanager = G4UImanager::GetUIpointer();
 
+    // if(ui != nullptr)  // Define UI session for interactive mode
+    // {
+    //     auto visManager = std::make_unique<G4VisExecutive>();
+    //     visManager->Initialize();
+
+    //     UImanager->ApplyCommand("/control/execute vis.mac");
+    //     ui->SessionStart();
+    //     // UI must be deleted *before* the vis manager
+    //     delete ui;
+    // }
     if(ui != nullptr)  // Define UI session for interactive mode
     {
         auto visManager = std::make_unique<G4VisExecutive>();
         visManager->Initialize();
 
-        UImanager->ApplyCommand("/control/execute vis.mac");
+        UImanager->ApplyCommand("/control/execute init_vis.mac");
         ui->SessionStart();
         // UI must be deleted *before* the vis manager
         delete ui;

@@ -1,0 +1,16 @@
+/WLGD/detector/setGeometry baseline_large_reentrance_tube
+
+/WLGD/detector/Cryostat_Radius_Outer 325
+/WLGD/detector/Cryostat_Height 325
+/WLGD/detector/With_NeutronModerators 3
+/WLGD/detector/Which_Material PMMA
+/WLGD/detector/TurbineAndTube_Height 300 cm
+/WLGD/detector/TurbineAndTube_Radius 200 cm
+/WLGD/detector/TurbineAndTube_Width  10  cm
+/WLGD/detector/TurbineAndTube_zPosition 42 cm
+
+/run/initialize
+
+/WLGD/generator/setGenerator SimpleGammaGun
+
+/control/execute vis.mac
