@@ -12,6 +12,14 @@ using namespace std;
 #include "G4SystemOfUnits.hh"
 
 #include "G4RunManager.hh"
+#include "WLGDEventAction.hh"
+#include "g4root.hh"
+
+#include "G4Run.hh"
+#include "G4UnitsTable.hh"
+#include <fstream>
+#include <iostream>
+
 
 WLGDSteppingAction::WLGDSteppingAction(WLGDEventAction* event, WLGDRunAction* run,
                                        WLGDDetectorConstruction* det)
@@ -25,6 +33,49 @@ WLGDSteppingAction::WLGDSteppingAction(WLGDEventAction* event, WLGDRunAction* ru
 
 void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
 {
+
+  //if(aStep->GetTrack()->GetDefinition()->GetPDGEncoding()==22)//Is a gamma
+  //{
+      //Fill the variables for the step-level ntuple
+      X    = aStep->GetPostStepPoint()->GetPosition().x()/CLHEP::mm;
+      Y    = aStep->GetPostStepPoint()->GetPosition().y()/CLHEP::mm;
+      Z    = aStep->GetPostStepPoint()->GetPosition().z()/CLHEP::mm;
+      Time = aStep->GetPostStepPoint()->GetGlobalTime()/CLHEP::ns;
+      KineticEnergy = aStep->GetPostStepPoint()->GetKineticEnergy()/CLHEP::keV;
+      TrackID       = aStep->GetTrack()->GetTrackID();
+      StepID        = aStep->GetTrack()->GetCurrentStepNumber();
+      PID           = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
+      Process       = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+      if(aStep->GetTrack()->GetCreatorProcess())
+	CreatorProcess = aStep->GetTrack()->GetCreatorProcess()->GetProcessName();
+      else
+	CreatorProcess = "Primary";
+      Material      = aStep->GetPostStepPoint()->GetMaterial()->GetName();
+      Volume        = aStep->GetPostStepPoint()->GetPhysicalVolume()->GetName();
+
+      //if(Material!="G4_WATER"&&Material!="StdRock"&&Material!="GdLoadedWater")
+      //{
+          //Fill the ntuple itself
+          auto *am = G4AnalysisManager::Instance();
+          //        G4cout << Material << G4endl;
+          am->FillNtupleDColumn(1,0,X);
+          am->FillNtupleDColumn(1,1,Y);
+          am->FillNtupleDColumn(1,2,Z);
+          am->FillNtupleDColumn(1,3,Time);
+          am->FillNtupleDColumn(1,4,KineticEnergy);
+          am->FillNtupleIColumn(1,5,TrackID);
+          am->FillNtupleIColumn(1,6,StepID);
+	  am->FillNtupleIColumn(1,7,PID);
+          am->FillNtupleSColumn(1,8,Process);
+	  am->FillNtupleSColumn(1,9,CreatorProcess);
+          am->FillNtupleSColumn(1,10,Material);
+          am->FillNtupleSColumn(1,11,Volume);
+          am->AddNtupleRow(1);
+	  //}
+	  //}//If is gamma
+
+
+  
 #define MostOuterRadiusTracking 0
   // Edit: 2021/03/05 by Moritz Neuberger
   // Adding tracking of amount of neutrons crossing the detectors
