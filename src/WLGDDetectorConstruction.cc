@@ -1326,18 +1326,18 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       //Any regular polygon can be inscribed inside of a circle, so the radius is used as the radius of an inscribing circle
 
       //Formula for an inscribed regular polygon's side compared to the inscribed circle's radius:
-      //l = 2*r*sin(pi/n)
+      //l = 2*r*tan(pi/n)
 
       //All in meters
-      G4double shieldheight = fBoratedTurbineHeight/100;//Half-height
+      G4double shieldheight = fBoratedTurbineHeight/200;//Half-height
       G4double shieldradius = fBoratedTurbineRadius/100;
       G4double shieldthickness = fBoratedTurbineWidth/200;//Half-thickness
       //shieldnsides is set by the user
 
       //G4double shieldwedgeouterlength = shieldradius*std::sin(CLHEP::pi/shieldnsides);//Half-length
       //G4double shieldwedgeinnerlength = (shieldradius-shieldthickness)*std::sin(CLHEP::pi/shieldnsides);//Half-length
-      G4double shieldwedgeouterlength = shieldradius*std::tan(CLHEP::pi/shieldnsides);//Half-length
-      G4double shieldwedgeinnerlength = (shieldradius-shieldthickness)*std::tan(CLHEP::pi/shieldnsides);//Half-length
+      G4double shieldwedgeinnerlength = shieldradius*std::tan(CLHEP::pi/shieldnsides);//Half-length
+      G4double shieldwedgeouterlength = (shieldradius+shieldthickness*2)*std::tan(CLHEP::pi/shieldnsides);//Half-length
 
       //Piece of the shield's wall
       G4Trd *shieldwedge = new G4Trd("shieldwedge",shieldheight*m,shieldheight*m,shieldwedgeouterlength*m,shieldwedgeinnerlength*m,shieldthickness*m);
@@ -1347,7 +1347,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 
 
       //Piece of the shield's bottom, which should be the same thickness as the wall, and one end of the trapezoid tapers off to 0, making it a triangle
-      G4Trd *shieldbottompiece = new G4Trd("shieldbottompiece",shieldthickness*m,shieldthickness*m,shieldwedgeinnerlength*m,0*m,(shieldradius-shieldthickness)/2*m);
+      G4Trd *shieldbottompiece = new G4Trd("shieldbottompiece",shieldthickness*m,shieldthickness*m,shieldwedgeouterlength*m,0*m,(shieldradius+2*shieldthickness)/2*m);
 
       G4LogicalVolume *shieldbottompiecelogical =
         new G4LogicalVolume(shieldbottompiece, BoratedPETMat, "Shieldbottompiece_log");
@@ -1360,7 +1360,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       //G4double shieldtopinnerlength = 1*std::sin(CLHEP::pi/shieldnsides);
       G4double shieldtopinnerlength = 1*std::tan(CLHEP::pi/shieldnsides);
 
-      G4Trd *shieldtoppiece = new G4Trd("shieldtoppiece",shieldthickness*m,shieldthickness*m,shieldwedgeinnerlength*m,shieldtopinnerlength*m,(shieldradius-shieldthickness-1)/2*m);
+      G4Trd *shieldtoppiece = new G4Trd("shieldtoppiece",shieldthickness*m,shieldthickness*m,shieldwedgeouterlength*m,shieldtopinnerlength*m,(shieldradius+2*shieldthickness-1)/2*m);
 
       G4LogicalVolume *shieldtoppiecelogical =
         new G4LogicalVolume(shieldtoppiece, BoratedPETMat, "Shieldtoppiece_log");
@@ -1376,24 +1376,23 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 
           //wall
           new G4PVPlacement(
-                            rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness)*m,
-                                                 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness)*m,
-                                                 fBoratedTurbinezPosition * cm - b_height - b_width),
+                            rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius+shieldthickness)*m,
+                                                 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius+shieldthickness)*m,
+                                                 fBoratedTurbinezPosition * cm),
                             shieldwedgelogical, "Shield_phys", fLarLogical, false, 0, true);
 
-          //bottom
+          // bottom
           new G4PVPlacement(
-                            rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness)/2*m,
-                                                 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness)/2*m,
-                                                 fBoratedTurbinezPosition * cm - b_height - b_width - shieldheight*m),
-                            shieldbottompiecelogical, "Shield_phys", fLarLogical, false, 0, true);
+                            rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius+2*shieldthickness)/2*m,
+                                                 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius+2*shieldthickness)/2*m,
+                                                 fBoratedTurbinezPosition * cm - shieldheight*m - shieldthickness*m),
+                            shieldbottompiecelogical, "Shield_phys2", fLarLogical, false, 0, true);
           //top
           new G4PVPlacement(
-                            rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness+1)/2*m,
-                                                 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius-shieldthickness+1)/2*m,
-                                                 fBoratedTurbinezPosition * cm - b_height
-                                                 - b_width + shieldheight*m),
-                            shieldtoppiecelogical, "Shield_phys", fLarLogical, false, 0, true);
+                            rotme, G4ThreeVector(std::sin(2*i*CLHEP::pi/shieldnsides)*(shieldradius+2*shieldthickness+1)/2*m,
+                                                 std::cos(2*i*CLHEP::pi/shieldnsides)*(shieldradius+2*shieldthickness+1)/2*m,
+                                                 fBoratedTurbinezPosition * cm + shieldheight*m+shieldthickness*m),
+                            shieldtoppiecelogical, "Shield_phys3", fLarLogical, false, 0, true);
 
         }
 
@@ -1407,11 +1406,11 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       //The user can also define materials for the light guide+cladding, and the WLS coating
 
 
-      double lightguidex = 1*m;
-      double lightguidey = 1*cm;
-      double lightguidez = 10*cm;
+      double lightguidex = 0.5*m;   // 1m
+      double lightguidey = 1*cm;    // 2cm
+      double lightguidez = 5*cm;    // 10cm
 
-      G4Material *lightguidematerial = G4Material::GetMaterial("PolyGd");
+      G4Material *lightguidematerial = G4Material::GetMaterial("PMMA");
 
       G4Box* lightguidesolid = new G4Box("lightguide", lightguidex, lightguidey, lightguidez);
       G4LogicalVolume *lightguidelogical = new G4LogicalVolume(lightguidesolid,lightguidematerial,"lightguide_log");
