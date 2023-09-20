@@ -86,6 +86,7 @@ void WLGDDetectorConstruction::DefineMaterials()
   N    = new G4Element("Nitrogen", "N", 7., 14.00 * g / mole);
   O    = new G4Element("Oxygen", "O", 8., 16.00 * g / mole);
   F    = new G4Element("Fluorine","F",9, 19.00 * g / mole);
+  Si   = new G4Element("Silicon","Si",14, 28.09 * g / mole);
   elS  = new G4Element("Sulfur", "S", 16., 32.066 * g / mole);
   Mg   = new G4Element("Magnesium", "Mg", 12., 24.31 * g / mole);
   Ca   = new G4Element("Calcium", "Ca", 20., 40.08 * g / mole);
@@ -353,7 +354,9 @@ void WLGDDetectorConstruction::DefineMaterials()
   tetratex->AddElement(F,0.76);
   tetratex->AddElement(C,0.24);
 
-  
+  silicon = new G4Material("silicon", 3.74 * g / cm3, 1, kStateSolid);  
+  silicon->AddElement(Si,1);
+
 }//DefineMaterials()
 
 
@@ -1405,19 +1408,54 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       //The user can define the dimensions of the light guide, the thickness of the cladding (later), and the number of cladding layers
       //The user can also define materials for the light guide+cladding, and the WLS coating
 
+  
+      G4double lightguidex = 0.5*m;   // 1m
+      G4double lightguidey = 1*cm;    // 2cm
+      G4double lightguidez = 5*cm;    // 10cm
+      G4double PEN_thickness = 0.05*cm; // 100 micron
 
-      double lightguidex = 0.5*m;   // 1m
-      double lightguidey = 1*cm;    // 2cm
-      double lightguidez = 5*cm;    // 10cm
+      // PEN WLS solid that will later contain the light guide
+      // the same structure can be followed for adding more cladding layers
+      G4Box* PENsolid = new G4Box("PEN_film", lightguidex + PEN_thickness/2, lightguidey + PEN_thickness, lightguidez + PEN_thickness);
+      G4LogicalVolume *PENfilmlogical = new G4LogicalVolume(PENsolid, PEN, "PENfilm_log");
+      new G4PVPlacement(nullptr, G4ThreeVector(0*m,shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness,0*m), PENfilmlogical, "PENfilm_phys", fLarLogical, false, 0, true);
 
       G4Material *lightguidematerial = G4Material::GetMaterial("PMMA");
-
+      // lightguide inside PEN WLS
       G4Box* lightguidesolid = new G4Box("lightguide", lightguidex, lightguidey, lightguidez);
       G4LogicalVolume *lightguidelogical = new G4LogicalVolume(lightguidesolid,lightguidematerial,"lightguide_log");
+      new G4PVPlacement(nullptr, G4ThreeVector(-PEN_thickness/2,0*m,0*m), lightguidelogical, "LightGuide_phys", PENfilmlogical, false, 0, true);
 
-      new G4PVPlacement(nullptr, G4ThreeVector(0*m,2.3*m,0*m), lightguidelogical, "LightGuide_phys", fLarLogical, false, 0, true);
 
+      // implementation of adiabatic light guide for better SiPM-lightguide coupling
+      G4double adiabaticx = 0.9*cm; // 1.8cm
+      G4double adiabaticy = 0.6*cm; // 1.2cm
+      G4double adiabaticz = 1*cm;   // 2cm
 
+      G4Trd *adiabaticSolid = new G4Trd("adiabaticGuide", lightguidey, adiabaticx, lightguidez, adiabaticy, adiabaticz);
+      G4LogicalVolume *adiabaticLogical = new G4LogicalVolume(adiabaticSolid, lightguidematerial, "adiabatic_log");
+      G4RotationMatrix* myrotation = new G4RotationMatrix(90*deg,-90*deg,0*deg);
+      new G4PVPlacement(
+          myrotation, 
+          G4ThreeVector(-lightguidex-adiabaticz-PEN_thickness/2, shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness, 0*m), 
+          adiabaticLogical, 
+          "AdiabaticGuide_phys", 
+          fLarLogical, 
+          false, 
+          0, 
+          true);
+
+      G4Box* siDetSolid = new G4Box("siDet", 0.25*cm, adiabaticx, adiabaticy);
+      G4LogicalVolume *siDetLogical = new G4LogicalVolume(siDetSolid, silicon, "siDet_log");
+      new G4PVPlacement(
+        nullptr, 
+        G4ThreeVector(-lightguidex-2*adiabaticz-PEN_thickness/2-0.25*cm, shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness, 0*m),
+        siDetLogical, 
+        "SiliconDet_phys",
+        fLarLogical, 
+        false, 
+        0, 
+        true);
 
     }//if(fWithBoratedPET == 5)
 

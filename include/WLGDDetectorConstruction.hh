@@ -137,6 +137,7 @@ private:
   G4Element*              N;
   G4Element*              O;
   G4Element*              F;
+  G4Element*              Si;
   G4Element*              elS;
   G4Element*              Mg;
   G4Element*              Ca;
@@ -193,6 +194,7 @@ private:
   G4Material*             TPB;
   G4Material*             polystyrene;
   G4Material*             tetratex;
+  G4Material*             silicon;
   
 };
 
