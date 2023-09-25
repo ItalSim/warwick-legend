@@ -46,6 +46,7 @@ WLGDDetectorConstruction::~WLGDDetectorConstruction()
 {
   delete fDetectorMessenger;
   delete fBiasMessenger;
+  delete fOpticsMessenger;
 }
 
 auto WLGDDetectorConstruction::Construct() -> G4VPhysicalVolume*
@@ -1400,63 +1401,90 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
         }
 
 
-      //If optics are enabled, add the light guide instrumentation
+      
+      if(fOpticalOption)
+	{//If optics are enabled, add the light guide instrumentation
 
-      //The light guide consists of a parallelipiped made of plastic (most likely PMMA) coated in 0 to a few layers of cladding
-      //with one layer of WLS material on the outside
+	  
+	  //The light guide consists of a parallelipiped made of plastic (most likely PMMA) coated in 0 to a few layers of cladding,
+	  //usually with one layer of WLS material on the outside
+	  
+	  //The user can define properties for the core (hereafter referred to as simply the light guide), the cladding, and the WLS coating
+	  
+	  //Transfer user-defined variables to local variables with shorter names and give units
+	  //Also divide some dimensions in half, in keeping with Geant4 geometry definitions
 
-      //The user can define the dimensions of the light guide, the thickness of the cladding (later), and the number of cladding layers
-      //The user can also define materials for the light guide+cladding, and the WLS coating
+	  G4int    cladnum        = fNCladdingLayers;
+	  G4String lgmatname      = fLightGuideMaterial;
+	  G4String cladmatname    = fCladdingMaterial;
+	  G4String wlsmatname     = fWLSMaterial;
+	  G4double cladthickness  = fCladdingThickness/10000 *cm;//given by the user in micrometers
+	  G4double lglength       = fLightGuideLength/2      *cm;//half-length
+	  G4double lgwidth        = fLightGuideWidth/2       *cm;//half-width
+	  G4double lgspacing      = fLightGuideSpacing       *cm;//Default 30 cm
+	  G4int    lgnum          = fLightGuideNPerWall;//Default 12
+	  G4bool   wlsactive      = fWLSOption;
 
-  
-      G4double lightguidex = 0.5*m;   // 1m
-      G4double lightguidey = 1*cm;    // 2cm
-      G4double lightguidez = 5*cm;    // 10cm
-      G4double PEN_thickness = 0.05*cm; // 100 micron
-
-      // PEN WLS solid that will later contain the light guide
-      // the same structure can be followed for adding more cladding layers
-      G4Box* PENsolid = new G4Box("PEN_film", lightguidex + PEN_thickness/2, lightguidey + PEN_thickness, lightguidez + PEN_thickness);
-      G4LogicalVolume *PENfilmlogical = new G4LogicalVolume(PENsolid, PEN, "PENfilm_log");
-      new G4PVPlacement(nullptr, G4ThreeVector(0*m,shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness,0*m), PENfilmlogical, "PENfilm_phys", fLarLogical, false, 0, true);
-
-      G4Material *lightguidematerial = G4Material::GetMaterial("PMMA");
-      // lightguide inside PEN WLS
-      G4Box* lightguidesolid = new G4Box("lightguide", lightguidex, lightguidey, lightguidez);
-      G4LogicalVolume *lightguidelogical = new G4LogicalVolume(lightguidesolid,lightguidematerial,"lightguide_log");
-      new G4PVPlacement(nullptr, G4ThreeVector(-PEN_thickness/2,0*m,0*m), lightguidelogical, "LightGuide_phys", PENfilmlogical, false, 0, true);
+	  //Light guide/core
 
 
-      // implementation of adiabatic light guide for better SiPM-lightguide coupling
-      G4double adiabaticx = 0.9*cm; // 1.8cm
-      G4double adiabaticy = 0.6*cm; // 1.2cm
-      G4double adiabaticz = 1*cm;   // 2cm
+	  //Cladding
 
-      G4Trd *adiabaticSolid = new G4Trd("adiabaticGuide", lightguidey, adiabaticx, lightguidez, adiabaticy, adiabaticz);
-      G4LogicalVolume *adiabaticLogical = new G4LogicalVolume(adiabaticSolid, lightguidematerial, "adiabatic_log");
-      G4RotationMatrix* myrotation = new G4RotationMatrix(90*deg,-90*deg,0*deg);
-      new G4PVPlacement(
-          myrotation, 
-          G4ThreeVector(-lightguidex-adiabaticz-PEN_thickness/2, shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness, 0*m), 
-          adiabaticLogical, 
-          "AdiabaticGuide_phys", 
-          fLarLogical, 
-          false, 
-          0, 
-          true);
-
-      G4Box* siDetSolid = new G4Box("siDet", 0.25*cm, adiabaticx, adiabaticy);
-      G4LogicalVolume *siDetLogical = new G4LogicalVolume(siDetSolid, silicon, "siDet_log");
-      new G4PVPlacement(
-        nullptr, 
-        G4ThreeVector(-lightguidex-2*adiabaticz-PEN_thickness/2-0.25*cm, shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness, 0*m),
+	  
+	  //WLS
+	  
+	  G4double lightguidex = 0.5*m;   // 1m
+	  G4double lightguidey = 1*cm;    // 2cm
+	  G4double lightguidez = 5*cm;    // 10cm
+	  G4double PEN_thickness = 0.005*cm; // 100 micron
+	  
+	  
+	  // PEN WLS solid that will later contain the light guide
+	  // the same structure can be followed for adding more cladding layers
+	  G4Box* PENsolid = new G4Box("PEN_film", lightguidex + PEN_thickness/2, lightguidey + PEN_thickness, lightguidez + PEN_thickness);
+	  G4LogicalVolume *PENfilmlogical = new G4LogicalVolume(PENsolid, PEN, "PENfilm_log");
+	  new G4PVPlacement(nullptr, G4ThreeVector(0*m,shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness,0*m), PENfilmlogical, "PENfilm_phys", fLarLogical, false, 0, true);
+	  
+	  G4Material *lightguidematerial = G4Material::GetMaterial("PMMA");
+	  // lightguide inside PEN WLS
+	  G4Box* lightguidesolid = new G4Box("lightguide", lightguidex, lightguidey, lightguidez);
+	  G4LogicalVolume *lightguidelogical = new G4LogicalVolume(lightguidesolid,lightguidematerial,"lightguide_log");
+	  new G4PVPlacement(nullptr, G4ThreeVector(-PEN_thickness/2,0*m,0*m), lightguidelogical, "LightGuide_phys", PENfilmlogical, false, 0, true);
+	  
+	  
+	  // implementation of adiabatic light guide for better SiPM-lightguide coupling
+	  G4double adiabaticx = 0.9*cm; // 1.8cm
+	  G4double adiabaticy = 0.6*cm; // 1.2cm
+	  G4double adiabaticz = 1*cm;   // 2cm
+	  
+	  G4Trd *adiabaticSolid = new G4Trd("adiabaticGuide", lightguidey, adiabaticx, lightguidez, adiabaticy, adiabaticz);
+	  G4LogicalVolume *adiabaticLogical = new G4LogicalVolume(adiabaticSolid, lightguidematerial, "adiabatic_log");
+	  G4RotationMatrix* myrotation = new G4RotationMatrix(90*deg,-90*deg,0*deg);
+	  new G4PVPlacement(
+			    myrotation, 
+			    G4ThreeVector(-lightguidex-adiabaticz-PEN_thickness/2, shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness, 0*m), 
+			    adiabaticLogical, 
+			    "AdiabaticGuide_phys", 
+			    fLarLogical, 
+			    false, 
+			    0, 
+			    true);
+	  
+	  G4Box* siDetSolid = new G4Box("siDet", 0.25*cm, adiabaticx, adiabaticy);
+	  G4LogicalVolume *siDetLogical = new G4LogicalVolume(siDetSolid, silicon, "siDet_log");
+	  new G4PVPlacement(
+			    nullptr, 
+			    G4ThreeVector(-lightguidex-2*adiabaticz-PEN_thickness/2-0.25*cm, shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness, 0*m),
         siDetLogical, 
-        "SiliconDet_phys",
-        fLarLogical, 
-        false, 
-        0, 
-        true);
-
+			    "SiliconDet_phys",
+			    fLarLogical, 
+			    false, 
+			    0, 
+			    true);
+	  
+	}//If optics are enabled
+            
+      
     }//if(fWithBoratedPET == 5)
 
   
@@ -1535,7 +1563,8 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   fBoratedPETLogical_Tube->SetVisAttributes(testVisAtt4);
   fBoratedPETLogical_Box->SetVisAttributes(testVisAtt4);
 
-  //SetupOpticalProperties();
+  if(fOpticalOption)
+    SetupOpticalProperties();
   
   return fWorldPhysical;
 
@@ -2233,6 +2262,7 @@ void WLGDDetectorConstruction::SetMuonBiasFactor(G4double mf) { fMuonBias = mf; 
 
 void WLGDDetectorConstruction::SetNeutronYieldBias(G4double nf) { fNeutronYieldBias = nf; }
 
+void WLGDDetectorConstruction::SetOpticalOption(G4bool opop) { fOpticalOption = opop; }
 
 // Additional settings for adjusting the detector geometry
 
@@ -2312,13 +2342,6 @@ void WLGDDetectorConstruction::SetTurbineAndTubeWidth(G4double width)
   fBoratedTurbineWidth = width;
 }
 
-//Option to set the number of sides of the polygon moderator
-void WLGDDetectorConstruction::SetPolygonShieldNSides(G4int sides)
-{
-  shieldnsides = sides;
-}
-
-
 // option to set the angle of the turbine structure
 void WLGDDetectorConstruction::SetTurbineAndTubeAngle(G4double deg)
 {
@@ -2364,6 +2387,65 @@ void WLGDDetectorConstruction::SetMaGeMaterial(G4int answer)
   WLGDDetectorConstruction::DefineMaterials();
   G4RunManager::GetRunManager()->ReinitializeGeometry();
 }
+
+void WLGDDetectorConstruction::SetPolygonShieldNSides(G4int sides)
+{
+  shieldnsides = sides;
+}
+
+void WLGDDetectorConstruction::SetNCladdingLayers(G4int nlayers)
+{
+  fNCladdingLayers = nlayers;
+}
+
+void WLGDDetectorConstruction::SetCladdingMaterial(G4String cladmat)
+{
+  fCladdingMaterial = cladmat;
+}
+
+void WLGDDetectorConstruction::SetCladdingThickness(G4double cladthick)
+{
+  fCladdingThickness = cladthick;
+}
+
+void WLGDDetectorConstruction::SetLightGuideLength(G4double lglength)
+{
+  fLightGuideLength = lglength;
+}
+
+void WLGDDetectorConstruction::SetLightGuideWidth(G4double lgwidth)
+{
+  fLightGuideWidth = lgwidth;
+}
+
+void WLGDDetectorConstruction::SetLightGuideMaterial(G4String lgmat)
+{
+  fLightGuideMaterial = lgmat;
+}
+
+void WLGDDetectorConstruction::SetLightGuideSpacing(G4double lgspacing)
+{
+  fLightGuideSpacing = lgspacing;
+}
+
+void WLGDDetectorConstruction::SetLightGuideNPerWall(G4int lgnperwall)
+{
+  fLightGuideNPerWall = lgnperwall;
+}
+
+void WLGDDetectorConstruction::UseWLSCoating(G4bool WLSon)
+{
+  fWLSOption = WLSon;
+}
+
+void WLGDDetectorConstruction::SetWLSCoatingMaterial(G4String WLSmatname)
+{
+  fWLSMaterial = WLSmatname;
+}
+
+
+
+
 
 void WLGDDetectorConstruction::DefineCommands()
 {
@@ -2514,15 +2596,6 @@ void WLGDDetectorConstruction::DefineCommands()
     .SetDefaultValue("5.0")
     .SetToBeBroadcasted(false);
 
-      //Set the number of sides for the polygon shield
-    fDetectorMessenger
-      ->DeclareMethod("PolygonShieldNSides",
-                    &WLGDDetectorConstruction::SetPolygonShieldNSides)
-    .SetGuidance("If using the polyhedral neutron shield, set the number of sides")
-    .SetDefaultValue("12")
-    .SetToBeBroadcasted(false);
-
-
   // option to set the radius of the turbine structure
   fDetectorMessenger
     ->DeclareMethod("TurbineAndTube_Height",
@@ -2564,7 +2637,124 @@ void WLGDDetectorConstruction::DefineCommands()
     .SetCandidates("0 1")
     .SetDefaultValue("0");
 
+  //Set the number of sides for the polygon shield
+  fDetectorMessenger
+    ->DeclareMethod("PolygonShieldNSides",
+                    &WLGDDetectorConstruction::SetPolygonShieldNSides)
+    .SetGuidance("If using the polyhedral neutron shield, set the number of sides")
+    .SetDefaultValue("12")
+    .SetToBeBroadcasted(false);
+  
 
+
+    // Command directory for the optics implementation
+  fOpticsMessenger =
+    new G4GenericMessenger(this, "/WLGD/optics/", "Commands for optical implementation");
+
+  
+  fOpticsMessenger
+    ->DeclareMethod("WithOptics", &WLGDDetectorConstruction::SetOpticalOption)
+    .SetGuidance("Set whether or not to set optical parameters for cryostat materials")
+    .SetGuidance("0 = no optics")
+    .SetGuidance("1 = with optics")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+  
+  //Set the number of cladding layers for the light guides
+  fOpticsMessenger
+    ->DeclareMethod("CladdingLayers",
+                    &WLGDDetectorConstruction::SetNCladdingLayers)
+    .SetGuidance("Set the number of layers of cladding around each light guide")
+    .SetDefaultValue("1")
+    .SetToBeBroadcasted(false);
+  
+  //Set the material for the cladding layers
+  fOpticsMessenger
+    ->DeclareMethod("CladdingMaterial",
+                    &WLGDDetectorConstruction::SetCladdingMaterial)
+    .SetGuidance("Set the material for the cladding on the light guides")
+    .SetGuidance("PEN - default")
+    .SetGuidance("PMMA")
+    .SetGuidance("Polystyrene")
+    .SetGuidance("Polyethylene")
+    .SetCandidates("PEN PMMA Polystyrene Polyethylene")
+    .SetDefaultValue("PEN")
+    .SetToBeBroadcasted(false);
+
+    //Set the thickness of each cladding layer (they all must share a thickness)
+  fOpticsMessenger
+    ->DeclareMethod("CladdingThickness",
+                    &WLGDDetectorConstruction::SetNCladdingLayers)
+    .SetGuidance("Set the thickness of each individual layer of cladding, in micrometers")
+    .SetDefaultValue("100")
+    .SetToBeBroadcasted(false);
+  
+  //Set the length of the light guide along each wall
+  fOpticsMessenger
+    ->DeclareMethod("LightGuideLength",
+                    &WLGDDetectorConstruction::SetLightGuideLength)
+    .SetGuidance("Set the length of each light guide along the wall, in cm")
+    .SetDefaultValue("100")
+    .SetToBeBroadcasted(false);
+  
+  //Set the width of the light guide along each wall
+  fOpticsMessenger
+    ->DeclareMethod("LightGuideWidth",
+                    &WLGDDetectorConstruction::SetLightGuideWidth)
+    .SetGuidance("Set the width of each light guide along the wall, in cm")
+    .SetDefaultValue("3")
+    .SetToBeBroadcasted(false);
+  
+  //Set the material for the light guides
+  fOpticsMessenger
+    ->DeclareMethod("LightGuideMaterial",
+                    &WLGDDetectorConstruction::SetLightGuideMaterial)
+    .SetGuidance("Set the material for the light guides")
+    .SetGuidance("PMMA - default")
+    .SetGuidance("Polystyrene")
+    .SetGuidance("Polyethylene")
+    .SetCandidates("PMMA Polystyrene Polyethylene")
+    .SetDefaultValue("PMMA")
+    .SetToBeBroadcasted(false);
+  
+  //Set the spacing (amount of empty space between each) for the light guides along each wall
+  fOpticsMessenger
+    ->DeclareMethod("LightGuideSpacing",
+                    &WLGDDetectorConstruction::SetLightGuideSpacing)
+    .SetGuidance("Set the spacing of each light guide along the wall, in cm")
+    .SetDefaultValue("30")
+    .SetToBeBroadcasted(false);
+  
+  //Set the number of light guides to place on each wall
+  fOpticsMessenger
+    ->DeclareMethod("NLightGuides",
+                    &WLGDDetectorConstruction::SetLightGuideNPerWall)
+    .SetGuidance("Set the number of light guides to place along the wall")
+    .SetDefaultValue("12")
+    .SetToBeBroadcasted(false);
+
+    //Decide whether or not to use a WLS coating around the light guide
+  fOpticsMessenger
+    ->DeclareMethod("UseWLSCoating",
+                    &WLGDDetectorConstruction::UseWLSCoating)
+    .SetGuidance("Choose whether or not to implement a layer of WLS coating on the outermost part of the light guide (0 is off, 1 is on)")
+    .SetDefaultValue("0")
+    .SetToBeBroadcasted(false);
+  
+  //Set the material for the WLS coating
+  fOpticsMessenger
+    ->DeclareMethod("WLSCoatingMaterial",
+                    &WLGDDetectorConstruction::SetWLSCoatingMaterial)
+    .SetGuidance("Set the material for the WLS coating")
+    .SetGuidance("TPB - default")
+    .SetGuidance("PEN")
+    .SetCandidates("TPB PEN")
+    .SetDefaultValue("TPB")
+    .SetToBeBroadcasted(false);
+  
+
+    
+  
   // Define bias operator command directory using generic messenger class
   fBiasMessenger =
     new G4GenericMessenger(this, "/WLGD/bias/", "Commands for controlling bias factors");

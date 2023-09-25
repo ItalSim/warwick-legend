@@ -31,7 +31,6 @@ public:
   G4double GetBoratedTurbineLength() { return fBoratedTurbineLength; }
   G4double GetBoratedTurbineAngle() { return fBoratedTurbineAngle; }
   G4double GetBoratedTurbineWidth() { return fBoratedTurbineWidth; }
-  void  SetPolygonShieldNSides(G4int sides);
   G4double GetBoratedTurbineHeight() { return fBoratedTurbineHeight; }
   G4double GetBoratedTurbinezPosition() { return fBoratedTurbinezPosition; }
   G4int    GetBoratedTurbinezNPanels() { return fNPanels; }
@@ -71,6 +70,8 @@ public:
   void  SetTurbineAndTubeHeight(G4double height);
   void  SetTurbineAndTubezPosition(G4double zPosition);
   void  SetTurbineAndTubeNPanels(G4double nPanels);
+  void  SetPolygonShieldNSides(G4int sides);
+
 
   // - set the concentration of Xe and He3 in the LAr
   void  SetXeConc(G4double nf);
@@ -92,6 +93,18 @@ public:
   double LArScintSpec(double LambdaES);
   double LArEpsilon(double lambda);
   
+  void SetOpticalOption(G4bool opop);
+  void SetNCladdingLayers(G4int nlayers);
+  void SetCladdingMaterial(G4String cladmat);
+  void SetCladdingThickness(G4double cladthick);
+  void SetLightGuideLength(G4double lglength);
+  void SetLightGuideWidth(G4double lgwidth);
+  void SetLightGuideMaterial(G4String lgmat);
+  void SetLightGuideSpacing(G4double lgspacing);
+  void SetLightGuideNPerWall(G4int lgnperwall);
+  void UseWLSCoating(G4bool WLSon);
+  void SetWLSCoatingMaterial(G4String WLSmatname);
+  
 private:
   void DefineCommands();
   void DefineMaterials();
@@ -103,6 +116,7 @@ private:
   G4GenericMessenger*     fDetectorMessenger       = nullptr;
   G4GenericMessenger*     fBiasMessenger           = nullptr;
   G4GenericMessenger*     fMaterialMessenger       = nullptr;
+  G4GenericMessenger*     fOpticsMessenger         = nullptr;
 
   G4double                fvertexZ                 = -1.0;
   G4double                fmaxrad                  = -1.0;
@@ -123,15 +137,28 @@ private:
   G4int                   shieldnsides             = 12;
   G4double                fBoratedTurbineHeight    = 600.;
   G4double                fBoratedTurbinezPosition = 0.;
-  G4int                   fNPanels;
-  G4int                   fBoratedTurbineNPanels = 0;
-  G4int                   fWithOutCupperTubes    = 0;
-  G4int                   fWithBoratedPET        = 0;
-  G4String                fSetMaterial           = "";
-  G4int                   fWithGdWater           = 0;
-  G4int                   fWithWoWater           = 0;
-  G4int                   fMaGeMaterial          = 0;
+  G4int                   fNPanels                 = 12;;
+  G4int                   fBoratedTurbineNPanels   = 0;
+  G4int                   fWithOutCupperTubes      = 0;
+  G4int                   fWithBoratedPET          = 0;
+  G4String                fSetMaterial             = "";
+  G4int                   fWithGdWater             = 0;
+  G4int                   fWithWoWater             = 0;
+  G4int                   fMaGeMaterial            = 0;
 
+  G4bool                  fOpticalOption           = false;
+  G4int                   fNCladdingLayers         = 1;
+  G4String                fCladdingMaterial        = "";
+  G4double                fCladdingThickness       = 100;//in um
+  G4double                fLightGuideLength        = 100.;
+  G4double                fLightGuideWidth         = 3.0;
+  G4String                fLightGuideMaterial      = "";
+  G4double                fLightGuideSpacing       = 0;//Default 30 cm
+  G4int                   fLightGuideNPerWall      = 0;//Default 12
+  G4bool                  fWLSOption               = false;
+  G4String                fWLSMaterial             = "TPB";
+  
+  
   G4Element*              H;
   G4Element*              C;
   G4Element*              N;
@@ -187,6 +214,9 @@ private:
   G4Material*             worldMaterial;
   G4Material*             larMat_alt;
   G4Material*             waterMat;
+  G4Material*             lightguidemat;
+  G4Material*             claddingmat;
+  G4Material*             wlsmat;
   G4Material*             CombinedArXeHe3;
   G4Material*             water;
   G4Material*             larMat;

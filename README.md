@@ -184,7 +184,27 @@ Macros to controll the detector geometry
     - Height
     - zPosition
     - NPanels
-    - NSides (for polyhedral tube only)
+- PolygonShield (for flat-sided neutron shield only)
+    - NSides
+
+###Optics commands
+
+/WLGD/optics/
+- WithOptics          (1 for on, 0 for off)
+- CladdingLayers      (default is 1)
+- CladdingMaterial    (default PEN)
+- CladdingThickness   (in um, default is 100)
+- LightGuideLength    (in cm, default 100)
+- LightGuideWidth     (default 3 cm)
+- LightGuideMaterial  (default PMMA)
+- LightGuideSpacing   (default is 30 cm)
+- NLightGuides        (default is 12)
+- UseWLSCoating       (1 for on, 0 for off)
+- WLSCoatingMaterial  (default is TPB)
+
+For the number of light guides and light guide spacing, the user can choose to set both. However, if only one is provided, a reasonable value for the other will be calculated based on the shield height.
+
+
 ```
 ### Bias Macro
 Macros to adjust the bias of the cross-sections
