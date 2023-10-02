@@ -9,6 +9,7 @@
 #include "G4EventManager.hh"
 #include "G4UnitsTable.hh"
 #include <map>
+#include "g4root.hh"
 
 WLGDTrackingAction::WLGDTrackingAction() = default;
 
@@ -126,8 +127,61 @@ void WLGDTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
       fRunAction->addParentParticleType(
         fEventAction->neutronProducerMap.find(aTrack->GetParentID())->second);
     }
-  }
-}
+    
+  }//If particle is a neutron
+
+  //If optical track-level output is enabled, fill the Optics ntuple
+
+  if(fRunAction->getWriteOutOpticalData())
+    {
+      if(aTrack->GetDefinition()->GetPDGEncoding()==-22)
+	{
+	  //G4cout << G4endl << "XYZ" << G4endl;
+	  X = aTrack->GetVertexPosition().x()*mm;
+	  Y = aTrack->GetVertexPosition().y()*mm;
+	  Z = aTrack->GetVertexPosition().z()*mm;
+	  //G4cout << G4endl << "Time,KE, Wave" << G4endl;
+	  Time = aTrack->GetGlobalTime()*ns;
+	  KineticEnergy = aTrack->GetVertexKineticEnergy()*eV;
+	  Wavelength = 1239.8*eV*nm/KineticEnergy;//in nm
+	  //G4cout << G4endl << "TrackID,EventID" << G4endl;
+	  TrackID = aTrack->GetTrackID();
+	  EventID = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
+	  //G4cout << G4endl << "GetCreatorProcess" << G4endl;
+	  if(aTrack->GetCreatorProcess())
+	    CreatorProcess = aTrack->GetCreatorProcess()->GetProcessName();
+	  else
+	    CreatorProcess = "Primary";
+	  //G4cout << G4endl << "Material" << G4endl;
+	  //if(aTrack->GetMaterial())
+	  //Material      = aTrack->GetMaterial()->GetName();	  
+	  //G4cout << G4endl << "Volume" << G4endl;
+	  if(aTrack->GetVolume())
+	    Volume        = aTrack->GetVolume()->GetName();
+
+
+
+	  //Fill the ntuple
+
+	  auto *am = G4AnalysisManager::Instance();
+          am->FillNtupleDColumn(2,0,X);
+          am->FillNtupleDColumn(2,1,Y);
+          am->FillNtupleDColumn(2,2,Z);
+          am->FillNtupleDColumn(2,3,Time);
+          am->FillNtupleDColumn(2,4,KineticEnergy);
+	  am->FillNtupleDColumn(2,5,Wavelength);
+          am->FillNtupleIColumn(2,6,TrackID);
+          am->FillNtupleIColumn(2,7,EventID);
+          am->FillNtupleSColumn(2,8,CreatorProcess);
+          am->FillNtupleSColumn(2,9,Volume);
+          am->AddNtupleRow(2);
+
+	  
+	}
+      
+    }
+  
+}//PreUserTrackingAction
 
 void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
 {

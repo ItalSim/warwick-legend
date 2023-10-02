@@ -328,6 +328,22 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   
   analysisManager->FinishNtuple();
 
+  
+  analysisManager->CreateNtuple("Optics","Track-level optical photon data");
+  
+  analysisManager->CreateNtupleDColumn("X");             //0
+  analysisManager->CreateNtupleDColumn("Y");             //1
+  analysisManager->CreateNtupleDColumn("Z");             //2
+  analysisManager->CreateNtupleDColumn("Time");          //3
+  analysisManager->CreateNtupleDColumn("KineticEnergy"); //4
+  analysisManager->CreateNtupleDColumn("Wavelength");    //5
+  analysisManager->CreateNtupleIColumn("TrackID");       //6
+  analysisManager->CreateNtupleIColumn("EventID");       //7
+  analysisManager->CreateNtupleSColumn("CreatorProcess");//8
+  analysisManager->CreateNtupleSColumn("Volume");        //9
+  
+  analysisManager->FinishNtuple();
+
 }
 
 WLGDRunAction::~WLGDRunAction() { delete G4AnalysisManager::Instance(); }
@@ -438,6 +454,17 @@ void WLGDRunAction::SetNeutronCaptureSiblings(G4int answer)
   fNeutronCaptureSiblings = answer;
 }
 
+void WLGDRunAction::SetWriteOutOpticalData(G4int answer)
+{
+  fWriteOutOpticalData = answer;
+}
+
+void WLGDRunAction::SetWriteOutStepData(G4int answer)
+{
+  fWriteOutStepData = answer;
+}
+
+
 void WLGDRunAction::DefineCommands()
 {
   // Define /WLGD/generator command directory using generic messenger class
@@ -520,6 +547,22 @@ void WLGDRunAction::DefineCommands()
     .SetCandidates("0 1")
     .SetDefaultValue("0");
 
+  fMessenger
+    ->DeclareMethod("WriteOpticalProductionData",
+                    &WLGDRunAction::SetWriteOutOpticalData)
+    .SetGuidance("Set whether to write out optical photon data at their time of production")
+    .SetGuidance("0 = do not output this data")
+    .SetGuidance("1 = output this data")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
 
-    //fReadMuonCrossingWLSR
+  fMessenger
+    ->DeclareMethod("WriteStepData",
+                    &WLGDRunAction::SetWriteOutStepData)
+    .SetGuidance("Set whether to write out step-level data within the cryostat (set cuts in WLGDSteppingAction.cc)")
+    .SetGuidance("0 = do not output this data")
+    .SetGuidance("1 = output this data")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+
 }

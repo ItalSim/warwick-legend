@@ -1855,7 +1855,7 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   G4double EnergyMin = LambdaE/(650*nm);
   G4double dE = (EnergyMax-EnergyMin)/(ArEntries - 1);
 
-  G4double EnergyMinScint = LambdaE/(136*nm);
+  G4double EnergyMinScint = LambdaE/(146*nm);
   G4double dES = (EnergyMax-EnergyMinScint)/(ArEntries - 1);
 
   //Ideally, the optical properties of a material can be described by a smoothly varying function of the photon energy
@@ -1879,6 +1879,7 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   G4double E = EnergyMin - dE;//To offset the first iteration of the next loop
   G4double EScint = EnergyMinScint - dES;
 
+  
   for(int i = 0; i < ArEntries; i++)
     {
 
@@ -1888,6 +1889,15 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
       LArEnergyArray[i] = E;
       LArScintEnergyArray[i] = EScint;
 
+        //Diagnostics
+      //G4cout << G4endl << G4endl << G4endl <<
+      //"E: " << E << G4endl <<
+      //"dE: " << dE << G4endl <<
+      //"EScint: " << EScint << G4endl <<
+      //"dEScint: " << dES << G4endl << 
+      //G4endl;
+
+
       //Functions are all dependent on wavelength
       LArRIArray[i] = LArRefIndex((LambdaE/E));
       LArRaylArray[i] = LArRayLength((LambdaE/E),temperature);
@@ -1895,6 +1905,8 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
 
       LArScintArray[i] = LArScintSpec((LambdaE/EScint));
 
+      //G4cout << G4endl << i << "   " << LambdaE/E/nm << " nm wavelength" <<  G4endl << "LAr refractive index: " << LArRIArray[i] << G4endl << "LAr Rayleigh value: " << LArRaylArray[i] << G4endl << "LAr absorption length: " << LArAbsArray[i] << G4endl << G4endl;
+      
     }//for(int i
 
   //Finally, with all the optical properties calculated, create a G4 object to store them and assign them to the LAr
@@ -1948,7 +1960,6 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   //Add array properties
   GeMPT->AddProperty("REFLECTIVITY",GeEnergyArray,GeReflArray,GeEntries);
   GeMPT->AddProperty("ABSLENGTH",   GeEnergyArray,GeAbsArray ,GeEntries);
-  //Refractive index will be calculated automatically later, using the surface definitions
   roiMat = G4Material::GetMaterial("enrGe");  
   roiMat->SetMaterialPropertiesTable(GeMPT);
 
@@ -2042,7 +2053,7 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
 
   for(int i = 0; i < 73; i++)
     {
-      TPB_emission_wavelength[i] = (LambdaE/(TPB_emission_wavelength[i]));
+      TPB_emission_wavelength[i] = (LambdaE/(TPB_emission_wavelength[i]*nm));
     }
 
   auto TPBTable = new G4MaterialPropertiesTable();
@@ -2093,7 +2104,7 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
 
 
   G4double PMMA_RefractiveIndex = 1.5;
-  G4double PMMA_AbsorptionLength = 2;
+  G4double PMMA_AbsorptionLength = 2*m;
 
   G4double PMMA_refraction[135];
   G4double PMMA_absorption[135];
@@ -2120,6 +2131,8 @@ double WLGDDetectorConstruction::LArEpsilon(double lambda)
   // See : A. Bideau-Mehu et al., "Measurement of refractive indices of Ne, Ar,
   // Kr and Xe ...", J. Quant. Spectrosc. Radiat. Transfer, Vol. 25 (1981), 395
 
+  //See also https://refractiveindex.info/?shelf=main&book=Ar&page=Grace-liquid-90K
+  //The values are approximately the same
   G4double epsilon;
   if (lambda < 110*nanometer) return 1.0e4; // lambda MUST be > 110.0 nm
   epsilon = lambda / micrometer; // switch to micrometers
@@ -2202,7 +2215,10 @@ double WLGDDetectorConstruction::LArScintSpec(double LambdaES)
 {
 
   G4double waveL;
-  waveL =exp(-0.5*((LambdaES-128.0)/(2.929))*((LambdaES-128.0)/(2.929)));
+  //Previously, the 5.858 was 2.929, but the spectrum was too sharply peaked compared to literature
+  //See for example https://cds.cern.ch/record/2713386?ln=en
+  waveL =exp(-0.5*((LambdaES*1000000-128.0)/(5.858))*((LambdaES*1000000-128.0)/(5.858)));
+  //G4cout << waveL << G4endl << LambdaES << G4endl << G4endl;
   return waveL;
 
 }//LarScintSpec

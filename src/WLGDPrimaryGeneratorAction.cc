@@ -190,7 +190,7 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     G4ThreeVector momentumDir(0, 0, -1);
     fParticleGun->SetParticleMomentumDirection(momentumDir);
     fParticleGun->SetParticleEnergy(2 * MeV);
-    fParticleGun->SetParticlePosition(G4ThreeVector(0*cm, 0*cm, -70*cm));
+    fParticleGun->SetParticlePosition(G4ThreeVector(0*cm, 0*cm, 0*cm));
     auto particleTable = G4ParticleTable::GetParticleTable();
     fParticleGun->SetParticleDefinition(particleTable->FindParticle("gamma"));
     fParticleGun->GeneratePrimaryVertex(event);

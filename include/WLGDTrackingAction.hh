@@ -30,6 +30,18 @@ private:
   double           tmp_MuonEnergy;
   WLGDEventAction* fEventAction;
   WLGDRunAction*   fRunAction;
+
+  G4double           X;
+  G4double           Y;
+  G4double           Z;
+  G4double           Time;
+  G4double           KineticEnergy;
+  G4double           Wavelength;
+  G4int              TrackID;
+  G4int              EventID;
+  G4String           CreatorProcess;
+  G4String           Material;
+  G4String           Volume;
 };
 
 #endif
