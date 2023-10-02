@@ -144,6 +144,8 @@ Macros regarding the output of the simulation
   - WriteOutGeneralNeutronInfo
   - getIndividualGeDepositionInfo
   - getIndividualGdDepositionInfo
+  - WriteOpticalProductionData
+  - WriteStepData
 ```
 ### Event Macro
 Macro to adjust the condition to save all events (1) or just the ones with Ge77 production (0) 
