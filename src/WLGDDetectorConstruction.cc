@@ -1333,7 +1333,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       //l = 2*r*tan(pi/n)
 
       //All in meters
-      G4double shieldheight = fBoratedTurbineHeight/200;//Half-height
+      G4double shieldheight = fBoratedTurbineHeight/100;//Half-height
       G4double shieldradius = fBoratedTurbineRadius/100;
       G4double shieldthickness = fBoratedTurbineWidth/200;//Half-thickness
       //shieldnsides is set by the user
@@ -1404,6 +1404,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
       
       if(fOpticalOption)
 	{//If optics are enabled, add the light guide instrumentation
+	  //Currently deprecated, but might be brought back in 2024
 
 	  
 	  //The light guide consists of a parallelipiped made of plastic (most likely PMMA) coated in 0 to a few layers of cladding,
@@ -1414,35 +1415,40 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 	  //Transfer user-defined variables to local variables with shorter names and give units
 	  //Also divide some dimensions in half, in keeping with Geant4 geometry definitions
 
-	  G4int    cladnum        = fNCladdingLayers;
+	  /*G4int    cladnum        = fNCladdingLayers;
 	  G4String lgmatname      = fLightGuideMaterial;
 	  G4String cladmatname    = fCladdingMaterial;
 	  G4String wlsmatname     = fWLSMaterial;
 	  G4double cladthickness  = fCladdingThickness/10000 *cm;//given by the user in micrometers
 	  G4double lglength       = fLightGuideLength/2      *cm;//half-length
 	  G4double lgwidth        = fLightGuideWidth/2       *cm;//half-width
+	  G4double lgheight       = fLightGuideHeight/2      *cm;//half-height
 	  G4double lgspacing      = fLightGuideSpacing       *cm;//Default 30 cm
 	  G4int    lgnum          = fLightGuideNPerWall;//Default 12
 	  G4bool   wlsactive      = fWLSOption;
-
+	  */
+	  
 	  //Light guide/core
 
-
+	  //--------
+	  
 	  //Cladding
 
+	  //--------
 	  
 	  //WLS
 	  
-	  G4double lightguidex = 0.5*m;   // 1m
-	  G4double lightguidey = 1*cm;    // 2cm
-	  G4double lightguidez = 5*cm;    // 10cm
-	  G4double PEN_thickness = 0.005*cm; // 100 micron
+	  //G4double PEN_thickness = 0.005*cm; // 100 micron
 	  
 	  
-	  // PEN WLS solid that will later contain the light guide
-	  // the same structure can be followed for adding more cladding layers
-	  G4Box* PENsolid = new G4Box("PEN_film", lightguidex + PEN_thickness/2, lightguidey + PEN_thickness, lightguidez + PEN_thickness);
-	  G4LogicalVolume *PENfilmlogical = new G4LogicalVolume(PENsolid, PEN, "PENfilm_log");
+	  //PEN WLS solid that will later contain the light guide
+	  //the same structure can be followed for adding more cladding layers
+	  
+	  //G4Box* PENsolid = new G4Box("PEN_film", lglength + PEN_thickness/2, lgwidth + PEN_thickness, lgheight + PEN_thickness);
+	  //G4LogicalVolume *PENfilmlogical = new G4LogicalVolume(PENsolid, PEN, "PENfilm_log");
+
+
+	  /*
 	  new G4PVPlacement(nullptr, G4ThreeVector(0*m,shieldradius*m + 2*shieldthickness*m + lightguidey + PEN_thickness,0*m), PENfilmlogical, "PENfilm_phys", fLarLogical, false, 0, true);
 	  
 	  G4Material *lightguidematerial = G4Material::GetMaterial("PMMA");
@@ -1481,7 +1487,32 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 			    false, 
 			    0, 
 			    true);
+	  *//*
+	  G4OpticalSurface* SScoating = new G4OpticalSurface("SScoating",unified,groundfrontpainted,dielectric_metal,0.9);
 	  
+	  G4LogicalBorderSurface* SScoatinglog = new G4LogicalBorderSurface("SScoatinglog",fLarPhysical,fCinnPhysical,SScoating);
+
+	  //G4MaterialPropertiesTable *SScoatingMPT = G4Material::GetMaterial("G4_STAINLESS-STEEL")->GetMaterialPropertiesTable();
+	  G4MaterialPropertiesTable *SScoatingMPT = new G4MaterialPropertiesTable();
+	  
+	  //Add new reflectivity properties for the steel
+
+	  const int SScoatingEntries = 8;
+
+	  G4double SScoatingWavelengthArray[SScoatingEntries] = {100,250,260,400,560,680,780,800};
+
+	  G4double SScoatingReflArray[SScoatingEntries] = {0.975,0.975,0.973,0.95,0.925,0.9,0.875,0.865};
+
+	  G4double SScoatingEnergyArray[SScoatingEntries];
+	  static const G4double LambdaE = twopi *1.973269602e-16 * m * GeV;	  
+	  for(int i = 0; i < SScoatingEntries; i++)
+	    SScoatingEnergyArray[i] = (LambdaE/(SScoatingWavelengthArray[i]*nm));
+	  
+	  SScoatingMPT->AddProperty("REFLECTIVITY",SScoatingEnergyArray,SScoatingReflArray,SScoatingEntries);
+	  //SScoatingMPT->AddProperty("ABSLENGTH",G4Material::GetMaterial("G4_STAINLESS-STEEL")->GetMaterialPropertiesTable()->GetProperty("ABSLENGTH"));
+
+	  SScoating->SetMaterialPropertiesTable(SScoatingMPT);
+	    */	  
 	}//If optics are enabled
             
       
@@ -2120,7 +2151,10 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   PENTable->AddProperty("ABSLENGTH",    PEN_absorption_wavelength, PMMA_absorption, 135);
 
 
-  
+
+
+
+
 }//SetupOpticalProperties
 
 

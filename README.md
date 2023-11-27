@@ -137,15 +137,26 @@ An output for the Ge77m veto has been added, more options to adjust the geometry
 ## Overview over the Macros
 
 ### Runaction Macro
-Macros regarding the output of the simulation 
+Macros regarding the output of the simulation
+All output macros have 0 as the default and must be set to 1 for the relevant output to fill
 ```
+
+Macros added by Moritz:
 /WLGD/runaction/
   - WriteOutNeutronProductionInfo
   - WriteOutGeneralNeutronInfo
+  - WriteOutAllNeutronInfoRoot
+  - WriteOutAdvancedMultiplicity
   - getIndividualGeDepositionInfo
   - getIndividualGdDepositionInfo
-  - WriteOpticalProductionData
-  - WriteStepData
+  - getNeutronCaptureSiblings
+  - readMuonCrossingWLSR
+
+Macros added by CJ:
+/WLGD/runaction/
+  - WriteOpticalProductionData (beginning-of-track info about all optical photons produced)
+  - WriteOpticalMapData        (for generating the optical map; probably only used by CJ)
+  - WriteStepData              (for writing out all step-level info; add cuts in the .cc)
 ```
 ### Event Macro
 Macro to adjust the condition to save all events (1) or just the ones with Ge77 production (0) 
@@ -158,15 +169,15 @@ Macros to controll the primary generator
 ```
 /WLGD/generator/
   - depth
-  - setMUSUNFile (path to file)
+  - setMUSUNFile (path to individual MUSUN file)
   - setMUSUNDirectory (full path to directory containing MUSUN files)
-  - setGenerator (options: "MeiAndHume", "Musun", "Ge77m", "Ge77andGe77m", "ModeratorNeutrons", "ExternalNeutrons")
+  - setGenerator (options: "MeiAndHume", "Musun", "Ge77m", "Ge77andGe77m", "ModeratorNeutrons", "ExternalNeutrons", "SimpleGammaGun", "SimpleNeutronGun")
 ```
 
 More information on SetMUSUNDirectory can be found in the OpenMUSUNDirectory method of src/WLGDPrimaryGeneratorAction.cc
 
 ### Detector Macro
-Macros to controll the detector geometry
+Macros to control the detector geometry
 ```
 /WLGD/detector/
   - setPositionOfDetectors
@@ -189,7 +200,7 @@ Macros to controll the detector geometry
 - PolygonShield (for flat-sided neutron shield only)
     - NSides
 
-###Optics commands
+###Optics commands (only the first is currently implemented)
 
 /WLGD/optics/
 - WithOptics          (1 for on, 0 for off)

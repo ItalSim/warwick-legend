@@ -359,7 +359,7 @@ void WLGDEventAction::EndOfEventAction(const G4Event* event)
   // -- writing all the information out
 
   G4int eventID = event->GetEventID();
-  if(((int) eventID) % 100 == 0)
+  if(((int) eventID) % 10000 == 0)
     G4cout << ">>> Event: " << eventID << G4endl;
 
   // Get crystal hits collections IDs

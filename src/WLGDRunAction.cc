@@ -29,7 +29,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
 
   // Creating ntuple with vector entries
   //
-  analysisManager->CreateNtuple("Score", "Hits");
+  analysisManager->CreateNtuple("Score", "Hits");//Index=0
   /*analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
   analysisManager->CreateNtupleIColumn("HitID", fEventAction->GetHitTID());
   analysisManager->CreateNtupleDColumn("Edep", fEventAction->GetHitEdep());
@@ -309,9 +309,11 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   */
   analysisManager->FinishNtuple();
 
-  //~
+  //Even if they remain unused, we must create every ntuple
+  //This is because, when using the analysis manager with multiple ntuples, the index of the ntuple is used when filling with data
+  //So, if we don't create the ntuple which normally has index=1, the next ntuple (which should be index=2) will have index=1
 
-  analysisManager->CreateNtuple("Steps","Step-level data");
+  analysisManager->CreateNtuple("Steps","Step-level data");//Index=1
   
   analysisManager->CreateNtupleDColumn("X");             //0
   analysisManager->CreateNtupleDColumn("Y");             //1
@@ -329,7 +331,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->FinishNtuple();
 
   
-  analysisManager->CreateNtuple("Optics","Track-level optical photon data");
+  analysisManager->CreateNtuple("OpticsTracks","Track-level optical photon data"); //Index=2
   
   analysisManager->CreateNtupleDColumn("X");             //0
   analysisManager->CreateNtupleDColumn("Y");             //1
@@ -341,6 +343,17 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleIColumn("EventID");       //7
   analysisManager->CreateNtupleSColumn("CreatorProcess");//8
   analysisManager->CreateNtupleSColumn("Volume");        //9
+  
+  analysisManager->FinishNtuple();
+
+  analysisManager->CreateNtuple("OpticalMapData","Data for creating the WLGD optical map");//Index=3
+  
+  analysisManager->CreateNtupleFColumn("X1");             //0
+  analysisManager->CreateNtupleFColumn("Y1");             //1
+  analysisManager->CreateNtupleFColumn("Z1");             //2
+  analysisManager->CreateNtupleFColumn("X2");             //3
+  analysisManager->CreateNtupleFColumn("Y2");             //4
+  analysisManager->CreateNtupleFColumn("Z2");             //5
   
   analysisManager->FinishNtuple();
 
@@ -459,6 +472,11 @@ void WLGDRunAction::SetWriteOutOpticalData(G4int answer)
   fWriteOutOpticalData = answer;
 }
 
+void WLGDRunAction::SetWriteOutOpticalMapData(G4int answer)
+{
+  fWriteOutOpticalMapData = answer;
+}
+
 void WLGDRunAction::SetWriteOutStepData(G4int answer)
 {
   fWriteOutStepData = answer;
@@ -551,6 +569,15 @@ void WLGDRunAction::DefineCommands()
     ->DeclareMethod("WriteOpticalProductionData",
                     &WLGDRunAction::SetWriteOutOpticalData)
     .SetGuidance("Set whether to write out optical photon data at their time of production")
+    .SetGuidance("0 = do not output this data")
+    .SetGuidance("1 = output this data")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+
+  fMessenger
+    ->DeclareMethod("WriteOpticalMapData",
+                    &WLGDRunAction::SetWriteOutOpticalMapData)
+    .SetGuidance("Set whether to write out optical map data (advanced option; read the source code for more info)")
     .SetGuidance("0 = do not output this data")
     .SetGuidance("1 = output this data")
     .SetCandidates("0 1")

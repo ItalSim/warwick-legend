@@ -33,48 +33,88 @@ WLGDSteppingAction::WLGDSteppingAction(WLGDEventAction* event, WLGDRunAction* ru
 
 void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
 {
+ 
+  if(fRunAction->getWriteOutStepData())
+    {//If the user wants step-level output
+      //Fill the ntuple variables first
+      if(aStep->GetPostStepPoint()->GetMaterial())//If the particle isn't exiting the world volume
+	{
+	  X    = aStep->GetPostStepPoint()->GetPosition().x()/CLHEP::mm;	  
+	  Y    = aStep->GetPostStepPoint()->GetPosition().y()/CLHEP::mm;
+	  Z    = aStep->GetPostStepPoint()->GetPosition().z()/CLHEP::mm;
+	  Time = aStep->GetPostStepPoint()->GetGlobalTime()/CLHEP::ns;
+	  KineticEnergy = aStep->GetPostStepPoint()->GetKineticEnergy()/CLHEP::keV;
+	  TrackID       = aStep->GetTrack()->GetTrackID();
+	  StepID        = aStep->GetTrack()->GetCurrentStepNumber();
+	  PID           = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
+	  Process       = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+	  if(aStep->GetTrack()->GetCreatorProcess())
+	    CreatorProcess = aStep->GetTrack()->GetCreatorProcess()->GetProcessName();
+	  else
+	    CreatorProcess = "Primary";
+	  if(aStep->GetPostStepPoint()->GetMaterial())
+	    Material      = aStep->GetPostStepPoint()->GetMaterial()->GetName();
+	  else
+	    Material = "Error";
+	  if(aStep->GetPostStepPoint()->GetPhysicalVolume())
+	    Volume        = aStep->GetPostStepPoint()->GetPhysicalVolume()->GetName();
+	  else
+	    Volume = "Error";
+	  
+	  //Cuts go here
+	  //if(Material=="PMMA")
+	  if(Material!="G4_WATER"&&Material!="StdRock"&&Material!="GdLoadedWater")
+	  {
+	    //Fill the ntuple itself
+	    auto *am = G4AnalysisManager::Instance();
+	    
+	    am->FillNtupleDColumn(1,0,X);
+	    am->FillNtupleDColumn(1,1,Y);
+	    am->FillNtupleDColumn(1,2,Z);
+	    am->FillNtupleDColumn(1,3,Time);
+	    am->FillNtupleDColumn(1,4,KineticEnergy);
+	    am->FillNtupleIColumn(1,5,TrackID);
+	    am->FillNtupleIColumn(1,6,StepID);
+	    am->FillNtupleIColumn(1,7,PID);
+	    am->FillNtupleSColumn(1,8,Process);
+	    am->FillNtupleSColumn(1,9,CreatorProcess);
+	    am->FillNtupleSColumn(1,10,Material);
+	    am->FillNtupleSColumn(1,11,Volume);
+	    am->AddNtupleRow(1);
+	  }
+	}
+    }//If user wants step level output
 
-  //if(aStep->GetTrack()->GetDefinition()->GetPDGEncoding()==22)//Is a gamma
-  //{
-      //Fill the variables for the step-level ntuple
-      X    = aStep->GetPostStepPoint()->GetPosition().x()/CLHEP::mm;
-      Y    = aStep->GetPostStepPoint()->GetPosition().y()/CLHEP::mm;
-      Z    = aStep->GetPostStepPoint()->GetPosition().z()/CLHEP::mm;
-      Time = aStep->GetPostStepPoint()->GetGlobalTime()/CLHEP::ns;
-      KineticEnergy = aStep->GetPostStepPoint()->GetKineticEnergy()/CLHEP::keV;
-      TrackID       = aStep->GetTrack()->GetTrackID();
-      StepID        = aStep->GetTrack()->GetCurrentStepNumber();
-      PID           = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
-      Process       = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
-      if(aStep->GetTrack()->GetCreatorProcess())
-	CreatorProcess = aStep->GetTrack()->GetCreatorProcess()->GetProcessName();
-      else
-	CreatorProcess = "Primary";
-      Material      = aStep->GetPostStepPoint()->GetMaterial()->GetName();
-      Volume        = aStep->GetPostStepPoint()->GetPhysicalVolume()->GetName();
+  if(fRunAction->getWriteOutOpticalMapData())
+    {
+  //Fill optical map data (should be macrocized later)
+  //Update: make sure the photon doesn't originate in the PMMA
+  
+  if(aStep->GetPreStepPoint()->GetMaterial()->GetName()=="PMMA")
+    aStep->GetTrack()->SetTrackStatus(fKillTrackAndSecondaries);
+  else if(aStep->GetTrack()->GetDefinition()->GetPDGEncoding()==-22&&aStep->GetPostStepPoint()->GetMaterial()->GetName()=="PMMA")
+    {
+      if(aStep->GetPreStepPoint()->GetMaterial()->GetName()!="G4_lAr")
+	G4cout << aStep->GetPreStepPoint()->GetMaterial()->GetName() << G4endl;
+      X1    = aStep->GetTrack()->GetVertexPosition().x()/CLHEP::mm;
+      Y1    = aStep->GetTrack()->GetVertexPosition().y()/CLHEP::mm;
+      Z1    = aStep->GetTrack()->GetVertexPosition().z()/CLHEP::mm;	 	  
+      X2    = aStep->GetPostStepPoint()->GetPosition().x()/CLHEP::mm;
+      Y2    = aStep->GetPostStepPoint()->GetPosition().y()/CLHEP::mm;
+      Z2    = aStep->GetPostStepPoint()->GetPosition().z()/CLHEP::mm;
+      auto *am = G4AnalysisManager::Instance();
+      am->FillNtupleFColumn(3,0,X1);
+      am->FillNtupleFColumn(3,1,Y1);
+      am->FillNtupleFColumn(3,2,Z1);
+      am->FillNtupleFColumn(3,3,X2);
+      am->FillNtupleFColumn(3,4,Y2);
+      am->FillNtupleFColumn(3,5,Z2);
+      am->AddNtupleRow(3);
+      aStep->GetTrack()->SetTrackStatus(fStopAndKill);
+      }
+    }//Fill optical map data
 
-      //if(Material!="G4_WATER"&&Material!="StdRock"&&Material!="GdLoadedWater")
-      //{
-          //Fill the ntuple itself
-          auto *am = G4AnalysisManager::Instance();
-          //        G4cout << Material << G4endl;
-          am->FillNtupleDColumn(1,0,X);
-          am->FillNtupleDColumn(1,1,Y);
-          am->FillNtupleDColumn(1,2,Z);
-          am->FillNtupleDColumn(1,3,Time);
-          am->FillNtupleDColumn(1,4,KineticEnergy);
-          am->FillNtupleIColumn(1,5,TrackID);
-          am->FillNtupleIColumn(1,6,StepID);
-	  am->FillNtupleIColumn(1,7,PID);
-          am->FillNtupleSColumn(1,8,Process);
-	  am->FillNtupleSColumn(1,9,CreatorProcess);
-          am->FillNtupleSColumn(1,10,Material);
-          am->FillNtupleSColumn(1,11,Volume);
-          am->AddNtupleRow(1);
-	  //}
-	  //}//If is gamma
-
-
+  
   
 #define MostOuterRadiusTracking 0
   // Edit: 2021/03/05 by Moritz Neuberger

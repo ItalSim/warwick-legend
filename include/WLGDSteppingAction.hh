@@ -40,6 +40,12 @@ private:
   G4double                  X;
   G4double                  Y;
   G4double                  Z;
+  G4float                   X1;
+  G4float                   Y1;
+  G4float                   Z1;
+  G4float                   X2;
+  G4float                   Y2;
+  G4float                   Z2;
   G4double                  Time;
   G4double                  KineticEnergy;
   G4int                     TrackID;

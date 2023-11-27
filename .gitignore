@@ -39,3 +39,13 @@ workdir
 # editor
 *.*~
 
+CMakeCache.txt
+CMakeFiles
+CTestTestfile.cmake
+DartConfiguration.tcl
+Makefile
+cmake_install.cmake
+macros
+output
+test
+warwick-legend

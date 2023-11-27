@@ -63,6 +63,7 @@ public:
   G4int getReadMuonCrossingWLSR()          { return fReadMuonCrossingWLSR; }
   G4int getNeutronCaptureSiblings()        { return fNeutronCaptureSiblings; }
   G4int getWriteOutOpticalData()           { return fWriteOutOpticalData; }
+  G4int getWriteOutOpticalMapData()           { return fWriteOutOpticalMapData; }
   G4int getWriteOutStepData()              { return fWriteOutStepData; }
   
 
@@ -86,7 +87,8 @@ private:
   G4int                 fReadMuonCrossingWLSR          = 0;
   G4int                 fNeutronCaptureSiblings        = 0;
   G4int                 fWriteOutStepData              = 0;
-  G4int                 fWriteOutOpticalData           = 0;  
+  G4int                 fWriteOutOpticalData           = 0;
+  G4int                 fWriteOutOpticalMapData        = 0;
   std::vector<G4int>    vector_eventNumber;
   std::vector<G4double> vector_x_dir;
   std::vector<G4double> vector_y_dir;
@@ -105,6 +107,7 @@ private:
   void                  SetReadMuonCrossingWLSR(G4int answer);
   void                  SetNeutronCaptureSiblings(G4int answer);
   void                  SetWriteOutOpticalData(G4int answer);
+  void                  SetWriteOutOpticalMapData(G4int answer);
   void                  SetWriteOutStepData(G4int answer);
 };
 
