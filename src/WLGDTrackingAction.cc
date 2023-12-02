@@ -29,8 +29,8 @@ void WLGDTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
   }
 
   // Adding tracking of initial muons
-  if(aTrack->GetParticleDefinition()->GetParticleName() == "mu-" ||
-     aTrack->GetParticleDefinition()->GetParticleName() == "mu+")
+  //~
+  if(aTrack->GetParticleDefinition()->GetParticleName() == "gamma")// && !aTrack->GetCreatorProcess())
   {
     auto tmp_vector = aTrack->GetVertexPosition();
     tmp_MuonXpos    = tmp_vector.getX() / m;
@@ -133,16 +133,19 @@ void WLGDTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
   //If optical track-level output is enabled, fill the Optics ntuple
 
   if(fRunAction->getWriteOutOpticalData())
-    {
-      if(aTrack->GetDefinition()->GetPDGEncoding()==-22)
+    {//~
+      if(aTrack->GetDefinition()->GetPDGEncoding()==22)
 	{
 	  //G4cout << G4endl << "XYZ" << G4endl;
-	  X = aTrack->GetVertexPosition().x()*mm;
-	  Y = aTrack->GetVertexPosition().y()*mm;
-	  Z = aTrack->GetVertexPosition().z()*mm;
+	  X = aTrack->GetVertexPosition().x()/mm;
+	  Y = aTrack->GetVertexPosition().y()/mm;
+	  Z = aTrack->GetVertexPosition().z()/mm;
+	  px = aTrack->GetMomentumDirection().x();
+	  py = aTrack->GetMomentumDirection().y();
+	  pz = aTrack->GetMomentumDirection().z();
 	  //G4cout << G4endl << "Time,KE, Wave" << G4endl;
-	  Time = aTrack->GetGlobalTime()*ns;
-	  KineticEnergy = aTrack->GetVertexKineticEnergy()*eV;
+	  Time = aTrack->GetGlobalTime()/ns;
+	  KineticEnergy = aTrack->GetVertexKineticEnergy()/eV;
 	  Wavelength = 1239.8*eV*nm/KineticEnergy;//in nm
 	  //G4cout << G4endl << "TrackID,EventID" << G4endl;
 	  TrackID = aTrack->GetTrackID();
@@ -174,6 +177,9 @@ void WLGDTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
           am->FillNtupleIColumn(2,7,EventID);
           am->FillNtupleSColumn(2,8,CreatorProcess);
           am->FillNtupleSColumn(2,9,Volume);
+	  am->FillNtupleDColumn(2,10,px);
+	  am->FillNtupleDColumn(2,11,py);
+	  am->FillNtupleDColumn(2,12,pz);
           am->AddNtupleRow(2);
 
 	  
@@ -207,6 +213,7 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
   }
 
   // write to output muon information
+  
   if(aTrack->GetTrackID() == 1)
   {
     fEventAction->AddMuonxLoc(tmp_MuonXpos);
@@ -216,7 +223,7 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
     fEventAction->AddMuonyMom(tmp_MuonYmom);
     fEventAction->AddMuonzMom(tmp_MuonZmom);
     fEventAction->AddMuonEnergy(tmp_MuonEnergy);
-  }
+    }
 
   if(fRunAction->getWriteOutNeutronProductionInfo() == 1)
   {

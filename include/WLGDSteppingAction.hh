@@ -48,8 +48,10 @@ private:
   G4float                   Z2;
   G4double                  Time;
   G4double                  KineticEnergy;
+  G4double                  EDep;
   G4int                     TrackID;
   G4int                     StepID;
+  G4int                     EventID;
   G4int                     PID;
   G4String                  Process;
   G4String                  CreatorProcess;

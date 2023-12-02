@@ -34,6 +34,9 @@ private:
   G4double           X;
   G4double           Y;
   G4double           Z;
+  G4double           px;
+  G4double           py;
+  G4double           pz;
   G4double           Time;
   G4double           KineticEnergy;
   G4double           Wavelength;
