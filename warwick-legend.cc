@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     //WLGDPrimaryGeneratorAction::ChangeFileName("./musun_gs_100M.dat");
     // command line interface
     CLI::App    app{ "Muon Simulation for Legend" };
-    int         nthreads = 1;
+    int         nthreads = 1;//24;
     std::string outputFileName("lg.root");
     std::string macroName;
 
@@ -107,7 +107,6 @@ int main(int argc, char** argv)
     auto* physicsList = new Shielding;//new  QGSP_BERT_HP;//new Shielding;
     G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
     physicsList->RegisterPhysics(opticalPhysics);
-
     // allow for thermal neutrons to find Ge
     auto* neutronCut  = new G4NeutronTrackingCut(1);
     neutronCut->SetTimeLimit(2.0 * CLHEP::ms);  // 2 milli sec limit
@@ -162,6 +161,7 @@ int main(int argc, char** argv)
     // finish physics list
     runManager->SetUserInitialization(physicsList);
 
+    
     // -- Set user action initialization class, forward random seed
     auto* actions = new WLGDActionInitialization(detector, outputFileName);
     runManager->SetUserInitialization(actions);

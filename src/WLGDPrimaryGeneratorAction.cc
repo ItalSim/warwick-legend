@@ -164,7 +164,7 @@ void WLGDPrimaryGeneratorAction::OpenArFile()
       if(fGenerator == "ArgonCaptureGammas"&&ArFileName == "")
       {//Open the input file, only once, only if it hasn't been opened yet
 	G4cout << "OPEN AR FILE" << G4endl;
-        ArFileName = "/lfs/l1/legend/users/morella/legend1k_simulation/argon_energy_deposit/high_stat_output.txt";
+        ArFileName = "/lfs/l1/legend/users/morella/legend1k_simulation/argon_energy_deposit/capture_data/output.txt";
 	ArFile.open(ArFileName);
       }
 
@@ -263,7 +263,6 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
   if(fGenerator == "OpticalMap")
     {
       std::uniform_real_distribution<> rndm(0.0, 1.0);
-      
       //Random azimuth and zenith for momentum
       G4double phi = CLHEP::twopi * rndm(generator);
       G4double theta = CLHEP::pi * rndm(generator);
@@ -282,9 +281,14 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
       //This will lead to some gammas being sampled inside of the shield
       //These need to be taken care of elsewhere, at the beginoftrack
       //G4double radius = (2.69 - 2.17408)*rndm(generator) + 2.17408;
-      G4double radius = (2.69 - 2.1)*rndm(generator) + 2.1;
+      //Update 08/12: changing the radius definition and adjusting z value for an attempt at an inner optical map
+      //The reentrant tube has an outer radius of 95 cm, and the circumradius of the 12-sided shield is 207.055 cm
+      //G4double radius = (3.25 - 2.1)*rndm(generator) + 2.1;//Good for the outer map sims
+      G4double radius = (2.07055 - 0.95)*rndm(generator) + 0.95;//Hopefully works for the inner map sims
+      
       //Right now the shield panel extends from z values -2.180 to 1.020 m
-      G4double z = (1.020 + 2.180)*rndm(generator) - 2.180;
+      //08/12 update for inner map sims: z is now 10 cm smaller in each direction
+      G4double z = (1.010 + 2.170)*rndm(generator) - 2.170;
       //Generate random x and y pair of coordinates with the radius value
       phi = CLHEP::twopi * rndm(generator);
       G4double x = radius*cos(phi);
@@ -310,7 +314,7 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
       pz = std::cos(theta);
       
       fParticleGun->SetParticlePolarization(G4ThreeVector(px,py,pz));
-      fParticleGun->GeneratePrimaryVertex(event);     
+      fParticleGun->GeneratePrimaryVertex(event);
     }//OpticalMap
   
   
@@ -936,7 +940,7 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 void WLGDPrimaryGeneratorAction::SetGenerator(const G4String& name)
 {
   std::set<G4String> knownGenerators = {
-    "MeiAndHume",        "Musun",           "Ge77m", "Ge77andGe77m", "ArgonCaptureGammas",
+    "MeiAndHume",        "Musun",           "Ge77m", "Ge77andGe77m", "ArgonCaptureGammas", "OpticalMap",
     "ModeratorNeutrons", "ExternalNeutrons", "Musun_alternative", "SimpleNeutronGun", "SimpleGammaGun"
   };
   if(knownGenerators.count(name) == 0)
@@ -1009,6 +1013,7 @@ void WLGDPrimaryGeneratorAction::DefineCommands()
     .SetGuidance("Set generator model of primary muons")
     .SetGuidance("SimpleNeutronGun = generate neutrons with zero energy at a certain location")
     .SetGuidance("SimpleGammaGun = what it sounds like")
+    .SetGuidance("OpticalMap = Generating primaries for the optical map")
     .SetGuidance("MeiAndHume = WW standard case")
     .SetGuidance("Musun = Used in previous MaGe simulation")
     .SetGuidance("Musun_alternative = Alternative Musun input")
@@ -1018,7 +1023,7 @@ void WLGDPrimaryGeneratorAction::DefineCommands()
     .SetGuidance("ExternalNeutrons = generate neutrons from outside the water tank")
     .SetGuidance("ArgonCaptureGammas = De-excitation gammas from n capture on Ar 40")
     .SetCandidates(
-      "MeiAndHume Musun Musun_alternative Ge77m Ge77andGe77m ModeratorNeutrons ExternalNeutrons SimpleNeutronGun SimpleGammaGun ArgonCaptureGammas");
+      "MeiAndHume Musun Musun_alternative Ge77m Ge77andGe77m ModeratorNeutrons ExternalNeutrons OpticalMap SimpleNeutronGun SimpleGammaGun ArgonCaptureGammas");
 
   fMessenger->DeclareMethod("SimpleNeutronGun_coord_x", &WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_coord_x)    
     .SetGuidance("Set the x coordinate for the neutron gun")

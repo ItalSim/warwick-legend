@@ -225,7 +225,11 @@ private:
   G4Material*             polystyrene;
   G4Material*             tetratex;
   G4Material*             silicon;
-  
+
+  //All of the G4solids, logical and physical volumes should be moved here
+  //However, that's hours of very boring work
+  G4VPhysicalVolume*      fOuterLArPhysical;
+  G4VPhysicalVolume*      fCopperPhysical;
 };
 
 #endif

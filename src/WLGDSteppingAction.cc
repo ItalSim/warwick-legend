@@ -44,6 +44,8 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
 	  Z    = aStep->GetPostStepPoint()->GetPosition().z()/CLHEP::mm;
 	  Time = aStep->GetPostStepPoint()->GetGlobalTime()/CLHEP::ns;
 	  KineticEnergy = aStep->GetPostStepPoint()->GetKineticEnergy()/CLHEP::keV;
+	  EDep          = aStep->GetTotalEnergyDeposit()/CLHEP::keV;
+	  EventID       = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
 	  TrackID       = aStep->GetTrack()->GetTrackID();
 	  StepID        = aStep->GetTrack()->GetCurrentStepNumber();
 	  PID           = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
@@ -65,36 +67,47 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
 	  //if(Material=="PMMA")
 	  if(Material!="G4_WATER"&&Material!="StdRock"&&Material!="GdLoadedWater")
 	  {
-	    //Fill the ntuple itself
-	    auto *am = G4AnalysisManager::Instance();
-	    
-	    am->FillNtupleDColumn(1,0,X);
-	    am->FillNtupleDColumn(1,1,Y);
-	    am->FillNtupleDColumn(1,2,Z);
-	    am->FillNtupleDColumn(1,3,Time);
-	    am->FillNtupleDColumn(1,4,KineticEnergy);
-	    am->FillNtupleIColumn(1,5,TrackID);
-	    am->FillNtupleIColumn(1,6,StepID);
-	    am->FillNtupleIColumn(1,7,PID);
-	    am->FillNtupleSColumn(1,8,Process);
-	    am->FillNtupleSColumn(1,9,CreatorProcess);
-	    am->FillNtupleSColumn(1,10,Material);
-	    am->FillNtupleSColumn(1,11,Volume);
-	    am->AddNtupleRow(1);
-	  }
+	      //Fill the ntuple itself
+	      auto *am = G4AnalysisManager::Instance();
+	      //Original	      
+	      am->FillNtupleDColumn(1,0,X);
+	      am->FillNtupleDColumn(1,1,Y);
+	      am->FillNtupleDColumn(1,2,Z);
+	      am->FillNtupleDColumn(1,3,Time);
+	      am->FillNtupleDColumn(1,4,KineticEnergy);
+	      am->FillNtupleIColumn(1,5,TrackID);
+	      am->FillNtupleIColumn(1,6,StepID);
+	      am->FillNtupleIColumn(1,7,EventID);
+	      am->FillNtupleIColumn(1,8,PID);
+	      am->FillNtupleSColumn(1,9,Process);
+	      am->FillNtupleSColumn(1,10,CreatorProcess);
+	      am->FillNtupleSColumn(1,11,Material);
+	      am->FillNtupleSColumn(1,12,Volume);
+	      am->FillNtupleDColumn(1,13,EDep);
+
+	      //For argon capture gammas
+	      //am->FillNtupleDColumn(1,0,X);
+	      //am->FillNtupleDColumn(1,1,Y);
+	      //am->FillNtupleDColumn(1,2,Z);
+	      //am->FillNtupleIColumn(1,3,EventID);
+	      //am->FillNtupleDColumn(1,4,EDep);
+	      
+	      am->AddNtupleRow(1);
+	      
+	    }
 	}
     }//If user wants step level output
-
+  
   if(fRunAction->getWriteOutOpticalMapData())
     {
-  //Fill optical map data (should be macrocized later)
+  //Fill optical map data
   //Update: make sure the photon doesn't originate in the PMMA
-  
-  if(aStep->GetPreStepPoint()->GetMaterial()->GetName()=="PMMA")
+  //~Not sure if the cut is working exactly as intended
+      if(aStep->GetPreStepPoint()->GetMaterial()->GetName()=="PMMA")
     aStep->GetTrack()->SetTrackStatus(fKillTrackAndSecondaries);
   else if(aStep->GetTrack()->GetDefinition()->GetPDGEncoding()==-22&&aStep->GetPostStepPoint()->GetMaterial()->GetName()=="PMMA")
     {
-      if(aStep->GetPreStepPoint()->GetMaterial()->GetName()!="G4_lAr")
+      if(aStep->GetPreStepPoint()->GetMaterial()->GetName()!="G4_lAr")//Debug
 	G4cout << aStep->GetPreStepPoint()->GetMaterial()->GetName() << G4endl;
       X1    = aStep->GetTrack()->GetVertexPosition().x()/CLHEP::mm;
       Y1    = aStep->GetTrack()->GetVertexPosition().y()/CLHEP::mm;
@@ -102,6 +115,7 @@ void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
       X2    = aStep->GetPostStepPoint()->GetPosition().x()/CLHEP::mm;
       Y2    = aStep->GetPostStepPoint()->GetPosition().y()/CLHEP::mm;
       Z2    = aStep->GetPostStepPoint()->GetPosition().z()/CLHEP::mm;
+      
       auto *am = G4AnalysisManager::Instance();
       am->FillNtupleFColumn(3,0,X1);
       am->FillNtupleFColumn(3,1,Y1);

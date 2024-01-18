@@ -735,7 +735,11 @@ auto WLGDDetectorConstruction::SetupAlternative() -> G4VPhysicalVolume*
 
 auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 {
-
+  
+  //~Not sure this belongs here
+    if(fOpticalOption)
+    SetupOpticalProperties();
+  
   // Get materials
   worldMaterial = G4Material::GetMaterial("G4_Galactic");
   // auto* larMat        = G4Material::GetMaterial("G4_lAr");
@@ -794,7 +798,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 
   // G4cout << larMat << G4endl;
 
-  
+
   // Edit: 2021/03/30 by Moritz Neuberger
   // Adjusted size of stone (1m->5m) s.t. MUSUN cuboid lies inside.
   // Also adjusted relative geometry relations s.t. they are independent of the stone
@@ -826,8 +830,8 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   G4double cryrad     = fCryostatOuterRadius;  // 350.0;  // cryostat diam 7 m
   G4double cryhheight = fCryostatHeight;       // 350.0;  // cryostat height 7 m
 
-  if(fGeometryName == "baseline_large_reentrance_tube")
-    vacgap     = 50.0;  
+  if(fGeometryName == "baseline_large_reentrance_tube")//Modified for new cryo dimensions Nov 2023
+    vacgap     = 25.0;  
 
   if(fGeometryName == "baseline_smaller" || fGeometryName == "baseline_large_reentrance_tube_4m_cryo")
     {
@@ -953,7 +957,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   auto* larSolid     = new G4Tubs("LAr", 0.0 * cm, (cryrad - 2 * cryowall - vacgap) * cm,
                                   (cryhheight - 2 * cryowall - vacgap) * cm, 0.0, CLHEP::twopi);
   auto* fLarLogical  = new G4LogicalVolume(larSolid, larMat, "Lar_log");
-  auto* fLarPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fLarLogical,
+  fOuterLArPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fLarLogical,
                                          "Lar_phys", fCinnLogical, false, 0, true);
 
   //
@@ -1196,7 +1200,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 			  true);
       
       if(fWithOutCupperTubes == 0)
-	new G4PVPlacement(nullptr, G4ThreeVector(0., 0., cushift * cm), fCopperLogical,
+	fCopperPhysical = new G4PVPlacement(nullptr, G4ThreeVector(0., 0., cushift * cm), fCopperLogical,
 			  "Copper_phys", fLarLogical, false, 0, true);
       
       new G4PVPlacement(nullptr, G4ThreeVector(0., 0., cushift * cm), fUlarLogical,
@@ -1501,7 +1505,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 
 	  G4double SScoatingWavelengthArray[SScoatingEntries] = {100,250,260,400,560,680,780,800};
 
-	  G4double SScoatingReflArray[SScoatingEntries] = {0.975,0.975,0.973,0.95,0.925,0.9,0.875,0.865};
+	  G4double SScoatingReflArray[SScoatingEntries] = {0.15,0.175,0.19,0.95,0.925,0.9,0.875,0.865};
 
 	  G4double SScoatingEnergyArray[SScoatingEntries];
 	  static const G4double LambdaE = twopi *1.973269602e-16 * m * GeV;	  
@@ -1594,8 +1598,8 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   fBoratedPETLogical_Tube->SetVisAttributes(testVisAtt4);
   fBoratedPETLogical_Box->SetVisAttributes(testVisAtt4);
 
-  if(fOpticalOption)
-    SetupOpticalProperties();
+  //~if(fOpticalOption)
+  //~ SetupOpticalProperties();
   
   return fWorldPhysical;
 
@@ -1996,6 +2000,8 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
 
 
   //Cu optical properties
+  //Dec 2023 update: for now, replace the copper optical properties with TPB on tetratex properties
+  /*  
   const static int CuEntries = 424;
 
   G4double CuWavelengthArray[CuEntries] = {110,150,180,280,281,282,283,284,285,286,287,288,289,290,291,292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,346,347,348,349,350,351,352,353,354,355,356,357,358,359,360,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,419,420,421,422,423,424,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,446,447,448,449,450,451,452,453,454,455,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,471,472,473,474,475,476,477,478,479,480,481,482,483,484,485,486,487,488,489,490,491,492,493,494,495,496,497,498,499,500,501,502,503,504,505,506,507,508,509,510,511,512,513,514,515,516,517,518,519,520,521,522,523,524,525,526,527,528,529,530,531,532,533,534,535,536,537,538,539,540,541,542,543,544,545,546,547,548,549,550,551,552,553,554,555,556,557,558,559,560,561,562,563,564,565,566,567,568,569,570,571,572,573,574,575,576,577,578,579,580,581,582,583,584,585,586,587,588,589,590,591,592,593,594,595,596,597,598,599,600,601,602,603,604,605,606,607,608,609,610,611,612,613,614,615,616,617,618,619,620,621,622,623,624,625,626,627,628,629,630,631,632,633,634,635,636,637,638,639,640,641,642,643,644,645,646,647,648,649,650,651,652,653,654,655,656,657,658,659,660,661,662,663,664,665,666,667,668,669,670,671,672,673,674,675,676,677,678,679,680,681,682,683,684,685,686,687,688,689,690,691,692,693,694,695,696,697,698,699,700};
@@ -2020,8 +2026,80 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
 
   copperMat = G4Material::GetMaterial("G4_Cu");
   copperMat->SetMaterialPropertiesTable(CuMPT);
+  */
   
+  
+  //A hopefully proper update to the reentrant tube's outside optical properties
+  //The reflectivity is handled by the tetratex (TTX), but the absorption and WLS is handled by the TPB
+  //The data for these two materials have been separated by variable name
 
+  //TTX first
+  
+  G4int TTXn = 9;
+  //We really need better reflectivity data for tetratex...
+  //VUV wavelength reflectivities are extrapolated from https://arxiv.org/ftp/arxiv/papers/2112/2112.06675.pdf
+  G4double TTXWavelengthArray[TTXn] = {100,200,250,260,400,560,680,780,800};
+  G4double TTXReflArray[TTXn] = {0.08,0.13,0.975,0.973,0.95,0.925,0.9,0.875,0.865};
+  //According to the same reference, absorption is high for photons below 400 nm wavelength
+  //Since the TPB/TTX is backed up by copper, let's just assume that any light which isn't reflected is absorbed
+  G4double TTXEnergyArray[TTXn] = {12.3984*eV,6.19921*eV,4.95937*eV,4.76862*eV,3.0996*eV,2.214*eV,1.8233*eV,1.58954*eV,1.5498*eV};
+
+  //Now, the TPB
+  
+  //Add array properties
+  G4double TPB_QuantumEff   = 1.2;
+  G4double TPB_TimeConstant = 0.01 *ns;
+  G4double TPB_RefrIndex    = 1.635;
+  G4double TPB_absorption_wavelength[33] = {50,250,274.25569,281.08581,287.39054,296.84764,302.62697,305.77933,308.9317,313.13485,318.38879,323.11734,326.7951,330.99825,336.25219,345.18389,353.59019,358.84413,364.62347,367.77583,371.97898,375.65674,380.91068,382.48687,386.16462,388.2662,391.41856,398.77408,402.45184,408.23117,412.43433,416.11208,420};
+  G4double TPB_absorption_energy[33] = {24.7968*eV,4.95937*eV,4.52075*eV,4.4109*eV,4.31414*eV,4.17669*eV,4.09693*eV,4.05469*eV,4.01332*eV,3.95945*eV,3.89411*eV,3.83713*eV,3.79394*eV,3.74577*eV,3.68724*eV,3.59183*eV,3.50644*eV,3.4551*eV,3.40033*eV,3.37119*eV,3.3331*eV,3.30046*eV,3.25494*eV,3.24153*eV,3.21066*eV,3.19328*eV,3.16756*eV,3.10913*eV,3.08072*eV,3.03711*eV,3.00616*eV,2.97959*eV,2.952*eV};
+  G4double TPB_absorption_length[33] = {350*nm,350*nm,102.76732*nm,102.79803*nm,102.82637*nm,101.52807*nm,100.23004*nm,89.07908*nm,78.13679*nm,71.2934*nm,62.54161*nm,56.32158*nm,50.05675*nm,46.887*nm,46.28649*nm,45.70102*nm,45.71782*nm,50.12696*nm,55.68845*nm,65.19302*nm,77.33125*nm,95.40979*nm,124.06602*nm,163.43344*nm,212.50585*nm,302.87049*nm,431.68105*nm,710.9301*nm,1040.25287*nm,1625.47721*nm,2378.4985*nm,3815.0562*nm,100000000000*nm};
+  G4double TPB_refraction[33];
+  
+  G4double TPB_emission_wavelength[73] = {353.45694,356.8928,360.32851,363.76375,367.19983,370.63606,373.44735,380.78887,385.63962,389.08314,392.6336,395.22414,399.49461,402.9634,406.42738,409.8887,413.66521,417.11474,420.56068,423.98695,427.41172,430.83778,434.2657,437.66231,440.96718,445.63913,448.59148,451.97578,455.38116,459.9268,464.14798,467.57144,469.75168,474.7285,482.36447,487.1961,490.62402,494.05341,496.70284,500.91343,504.34515,507.77818,511.2103,514.64097,518.07489,521.50815,524.94158,528.37382,531.80774,535.24179,538.67518,545.54433,548.9797,552.41406,555.84982,558.34851,565.10458,567.56107,573.33843,576.77279,580.20586,583.64376,587.07847,590.42149,593.94721,597.38369,599.88171,605.50064,608.46781,615.96514,620.80621,624.24025,627.05118};
+  G4double TPB_emission_energy[73] = {3.50776*eV,3.47399*eV,3.44087*eV,3.40837*eV,3.37648*eV,3.34517*eV,3.31999*eV,3.25598*eV,3.21503*eV,3.18657*eV,3.15776*eV,3.13706*eV,3.10353*eV,3.07681*eV,3.05059*eV,3.02483*eV,2.99721*eV,2.97242*eV,2.94807*eV,2.92425*eV,2.90081*eV,2.87775*eV,2.85503*eV,2.83287*eV,2.81164*eV,2.78217*eV,2.76386*eV,2.74316*eV,2.72265*eV,2.69574*eV,2.67122*eV,2.65166*eV,2.63936*eV,2.61169*eV,2.57034*eV,2.54485*eV,2.52707*eV,2.50953*eV,2.49614*eV,2.47516*eV,2.45832*eV,2.4417*eV,2.42531*eV,2.40914*eV,2.39317*eV,2.37742*eV,2.36187*eV,2.34652*eV,2.33137*eV,2.31641*eV,2.30165*eV,2.27267*eV,2.25845*eV,2.24441*eV,2.23053*eV,2.22055*eV,2.194*eV,2.18451*eV,2.1625*eV,2.14962*eV,2.1369*eV,2.12431*eV,2.11188*eV,2.09993*eV,2.08746*eV,2.07545*eV,2.06681*eV,2.04763*eV,2.03765*eV,2.01284*eV,1.99715*eV,1.98616*eV,1.97726*eV};
+  
+  G4double TPB_emission_intensity[73] = {0.00008,0.00009,0.0001,0.00008,0.00011,0.00014,0.00016,0.00026,0.00077,0.00119,0.00254,0.00386,0.0067,0.00845,0.00994,0.0113,0.0128,0.01354,0.01408,0.0136,0.01303,0.01253,0.01212,0.01172,0.01141,0.01073,0.00996,0.00911,0.0083,0.00749,0.00681,0.00618,0.00586,0.00479,0.00395,0.00345,0.00305,0.00272,0.00244,0.00214,0.00193,0.0018,0.00162,0.00136,0.00127,0.00115,0.00104,0.00086,0.00078,0.0007,0.00058,0.00048,0.00047,0.0004,0.00041,0.00042,0.00036,0.00036,0.00033,0.00027,0.00013,0.00026,0.00021,0.00004,0.00009,0.00013,0.0001,0.00005,0.00005,0.00003,0.00004,0.00004,0.00004};
+
+  
+  auto TPBTable = new G4MaterialPropertiesTable();
+  TPBTable->AddProperty     ("RINDEX",               TPB_absorption_energy, TPB_refraction,33);
+  TPBTable->AddProperty     ("WLSABSLENGTH",         TPB_absorption_energy, TPB_absorption_length,33);
+  TPBTable->AddProperty     ("WLSCOMPONENT",         TPB_emission_energy, TPB_emission_intensity,73);
+  TPBTable->AddConstProperty("WLSTIMECONSTANT",      TPB_TimeConstant);
+  TPBTable->AddConstProperty("WLSMEANNUMBERPHOTONS", TPB_QuantumEff);
+  TPB->SetMaterialPropertiesTable(TPBTable);
+  
+  
+  G4MaterialPropertiesTable* TPBTTXMPT = new G4MaterialPropertiesTable();
+
+  TPBTTXMPT->AddProperty     ("RINDEX",               TPB_absorption_energy, TPB_refraction,33);
+  TPBTTXMPT->AddProperty     ("REFLECTIVITY",         TTXEnergyArray,TTXReflArray,TTXn);
+  TPBTTXMPT->AddProperty     ("WLSABSLENGTH",         TPB_absorption_energy, TPB_absorption_length,33);
+  TPBTTXMPT->AddProperty     ("WLSCOMPONENT",         TPB_emission_energy, TPB_emission_intensity,73);
+  TPBTTXMPT->AddConstProperty("WLSTIMECONSTANT",      TPB_TimeConstant);
+  TPBTTXMPT->AddConstProperty("WLSMEANNUMBERPHOTONS", TPB_QuantumEff);
+  
+  
+  copperMat = G4Material::GetMaterial("G4_Cu");
+  copperMat->SetMaterialPropertiesTable(TPBTTXMPT);
+  
+  const G4int nEntries = 9;
+G4double PhotonEnergy[nEntries] = { 1.6*eV, 6.7*eV, 6.8*eV, 6.9*eV,
+7.0*eV, 7.1*eV, 7.2*eV, 7.3*eV, 17.4*eV };
+G4double RIndexFiber[nEntries] =
+{ 1.60, 1.60, 1.60, 1.60, 1.60, 1.60, 1.60, 1.60, 1.60 };
+G4double AbsFiber[nEntries] =
+{0.1*mm,0.2*mm,0.3*mm,0.4*mm,1.0*mm,10*mm,1.0*mm,10.0*mm,10.0*mm};
+G4double EmissionFiber[nEntries] =
+{0.0, 0.0, 0.0, 0.1, 0.5, 1.0, 5.0, 10.0, 10.0 };
+
+G4MaterialPropertiesTable* MPTFiber = new G4MaterialPropertiesTable();
+MPTFiber->AddProperty("RINDEX",PhotonEnergy,RIndexFiber,nEntries);
+MPTFiber->AddProperty("WLSABSLENGTH",PhotonEnergy,AbsFiber,nEntries);
+MPTFiber->AddProperty("WLSCOMPONENT",PhotonEnergy,EmissionFiber,nEntries);
+MPTFiber->AddConstProperty("WLSTIMECONSTANT", 0.5*ns);
+//copperMat->SetMaterialPropertiesTable(MPTFiber);
+  
   //For the steel, let Geant4 calculate the reflectivity automatically using the real and imaginary refractive indices
 
   const static int SSEntries = 28;
@@ -2062,39 +2140,6 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   //The remainder of the boundaries are mostly inside the fiber
   //The fiber needs a carefully defined, complex structure, since this is the most important area for optical sims
   //The fibers will be the last volumes to receive the optical treatment
-
-
-  //Add array properties
-  G4double TPB_QuantumEff   = 1.2;
-  G4double TPB_TimeConstant = 0.01 *ns;
-  G4double TPB_RefrIndex    = 1.635;
-  G4double TPB_absorption_wavelength[33] = {50,250,274.25569,281.08581,287.39054,296.84764,302.62697,305.77933,308.9317,313.13485,318.38879,323.11734,326.7951,330.99825,336.25219,345.18389,353.59019,358.84413,364.62347,367.77583,371.97898,375.65674,380.91068,382.48687,386.16462,388.2662,391.41856,398.77408,402.45184,408.23117,412.43433,416.11208,420};
-  G4double TPB_absorption_values[33] = {350,350,102.76732,102.79803,102.82637,101.52807,100.23004,89.07908,78.13679,71.2934,62.54161,56.32158,50.05675,46.887,46.28649,45.70102,45.71782,50.12696,55.68845,65.19302,77.33125,95.40979,124.06602,163.43344,212.50585,302.87049,431.68105,710.9301,1040.25287,1625.47721,2378.4985,3815.0562,100000000000};
-  G4double TPB_refraction[33];
-  
-  G4double TPB_emission_wavelength[73] = {353.45694,356.8928,360.32851,363.76375,367.19983,370.63606,373.44735,380.78887,385.63962,389.08314,392.6336,395.22414,399.49461,402.9634,406.42738,409.8887,413.66521,417.11474,420.56068,423.98695,427.41172,430.83778,434.2657,437.66231,440.96718,445.63913,448.59148,451.97578,455.38116,459.9268,464.14798,467.57144,469.75168,474.7285,482.36447,487.1961,490.62402,494.05341,496.70284,500.91343,504.34515,507.77818,511.2103,514.64097,518.07489,521.50815,524.94158,528.37382,531.80774,535.24179,538.67518,545.54433,548.9797,552.41406,555.84982,558.34851,565.10458,567.56107,573.33843,576.77279,580.20586,583.64376,587.07847,590.42149,593.94721,597.38369,599.88171,605.50064,608.46781,615.96514,620.80621,624.24025,627.05118};
-
-  G4double TPB_emission_values[73] = {0.00008,0.00009,0.0001,0.00008,0.00011,0.00014,0.00016,0.00026,0.00077,0.00119,0.00254,0.00386,0.0067,0.00845,0.00994,0.0113,0.0128,0.01354,0.01408,0.0136,0.01303,0.01253,0.01212,0.01172,0.01141,0.01073,0.00996,0.00911,0.0083,0.00749,0.00681,0.00618,0.00586,0.00479,0.00395,0.00345,0.00305,0.00272,0.00244,0.00214,0.00193,0.0018,0.00162,0.00136,0.00127,0.00115,0.00104,0.00086,0.00078,0.0007,0.00058,0.00048,0.00047,0.0004,0.00041,0.00042,0.00036,0.00036,0.00033,0.00027,0.00013,0.00026,0.00021,0.00004,0.00009,0.00013,0.0001,0.00005,0.00005,0.00003,0.00004,0.00004,0.00004};
-
-  for(int i = 0; i < 33; i++)
-    {
-      TPB_absorption_wavelength[i] = (LambdaE/(TPB_absorption_wavelength[i]*nm));
-      TPB_refraction[i] = TPB_RefrIndex;
-    }
-
-  for(int i = 0; i < 73; i++)
-    {
-      TPB_emission_wavelength[i] = (LambdaE/(TPB_emission_wavelength[i]*nm));
-    }
-
-  auto TPBTable = new G4MaterialPropertiesTable();
-  TPBTable->AddProperty     ("RINDEX",               TPB_absorption_wavelength, TPB_refraction, 33);
-  TPBTable->AddProperty     ("WLSABSLENGTH",         TPB_absorption_wavelength, TPB_absorption_values, 33);
-  TPBTable->AddProperty     ("WLSCOMPONENT",         TPB_emission_wavelength, TPB_emission_values,   73);
-  TPBTable->AddConstProperty("WLSTIMECONSTANT",      TPB_TimeConstant);
-  TPBTable->AddConstProperty("WLSMEANNUMBERPHOTONS", TPB_QuantumEff);
-  TPB->SetMaterialPropertiesTable(TPBTable);
-
 
   // PEN properties
   G4double PEN_RefractiveIndex = 1.51;
