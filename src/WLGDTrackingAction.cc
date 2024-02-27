@@ -165,8 +165,6 @@ void WLGDTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 	  if(aTrack->GetVolume())
 	    Volume        = aTrack->GetVolume()->GetName();
 
-
-
 	  //Fill the ntuple
 
 	  auto *am = G4AnalysisManager::Instance();
@@ -185,11 +183,8 @@ void WLGDTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 	  am->FillNtupleDColumn(2,12,pz);
           am->AddNtupleRow(2);
 
-	  
-	}
-      
+	}      
     }
-  
 }//PreUserTrackingAction
 
 void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
@@ -203,6 +198,7 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
 	}
     }
 
+  
   // for tracking of sibling and secundary particles of Ge76 nC
   if(fEventAction->GetIDListOfGe77SiblingParticles().count(aTrack->GetParentID()) &&
      fRunAction->getIndividualGeDepositionInfo())
@@ -216,6 +212,7 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
     }
 
   // write to output muon information
+
   
   if(aTrack->GetTrackID() == 1)
     {
@@ -228,6 +225,7 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
       fEventAction->AddMuonEnergy(tmp_MuonEnergy);
     }
 
+  
   if(fRunAction->getWriteOutNeutronProductionInfo() == 1)
     {
       G4TrackVector* secondaries = fpTrackingManager->GimmeSecondaries();
@@ -250,7 +248,7 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
 	    }
 	}
     }
-
+  
   // For Ge77m IC readout
   if(aTrack->GetParticleDefinition()->GetPDGEncoding() == 1000320771)
     {
@@ -278,8 +276,9 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
       if(aTrack->GetStep()->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName() ==
 	 "biasWrapper(nCapture)")  // altered name necessary due to biasing
 	{
-	  int NumberOfSecundaries = aTrack->GetStep()->GetSecondaryInCurrentStep()->size();
-	  for(int i = 0; i < NumberOfSecundaries; i++)
+	  int NumberOfSecondaries = aTrack->GetStep()->GetSecondaryInCurrentStep()->size();
+	  //G4cout << NumberOfSecondaries  << G4endl;
+	  for(int i = 0; i < NumberOfSecondaries; i++)
 	    {
 	      if(aTrack->GetStep()
 		 ->GetSecondaryInCurrentStep()
@@ -349,8 +348,11 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
 	      fEventAction->AddnCOther_Volume(whichVolume);
 	    }
 	}
-    }
-  if(fEventAction->isAllProductions()){
+    }//If neutron
+
+  
+  if(fEventAction->isAllProductions())
+    {
     int NumberOfSecondaries = aTrack->GetStep()->GetSecondaryInCurrentStep()->size();
     for(int i = 0; i < NumberOfSecondaries; i++)
       {
@@ -381,5 +383,5 @@ void WLGDTrackingAction::PostUserTrackingAction(const G4Track* aTrack)
 					   ->GetPDGEncoding());
 	}
       }
-  }
+    }//if(fEventAction->isAllProductions())
 }

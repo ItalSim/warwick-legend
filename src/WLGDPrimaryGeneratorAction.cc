@@ -16,22 +16,22 @@
 #include <random>
 #include <set>
 /*#include "TH1F.h"
-#include "TFile.h"*/
+  #include "TFile.h"*/
 //#include "TH1.h"
-
+#include "G4TransportationManager.hh"
 
 
 // G4String WLGDPrimaryGeneratorAction::fFileName;
 // std::ifstream* WLGDPrimaryGeneratorAction::fInputFile;
 
 WLGDPrimaryGeneratorAction::WLGDPrimaryGeneratorAction(WLGDDetectorConstruction* det)
-: G4VUserPrimaryGeneratorAction()
-, fDetector(det)
-, fParticleGun(nullptr)
-, fMessenger(nullptr)
-, fDepth(0.0)
-, fGenerator("Musun")
-, fZShift(200.0 * cm)
+  : G4VUserPrimaryGeneratorAction()
+  , fDetector(det)
+  , fParticleGun(nullptr)
+  , fMessenger(nullptr)
+  , fDepth(0.0)
+  , fGenerator("Musun")
+  , fZShift(200.0 * cm)
 {
   generator.seed(rd());  // set a random seed
 
@@ -48,6 +48,8 @@ WLGDPrimaryGeneratorAction::WLGDPrimaryGeneratorAction(WLGDDetectorConstruction*
   fFileName = "";
 }
 
+
+
 WLGDPrimaryGeneratorAction::~WLGDPrimaryGeneratorAction()
 {
   delete fParticleGun;
@@ -61,11 +63,13 @@ WLGDPrimaryGeneratorAction::~WLGDPrimaryGeneratorAction()
 void WLGDPrimaryGeneratorAction::OpenFile()
 {
   fInputFile.open(fFileName, std::ifstream::in);
-    if(!(fInputFile.is_open()))
+  if(!(fInputFile.is_open()))
     {  
-    G4cerr << "Musung file not valid! Name: " << fFileName << G4endl;
+      G4cerr << "Musung file not valid! Name: " << fFileName << G4endl;
     }
 }
+
+
 
 void WLGDPrimaryGeneratorAction::OpenMUSUNDirectory(G4String pathtodata)
 {
@@ -88,9 +92,9 @@ void WLGDPrimaryGeneratorAction::OpenMUSUNDirectory(G4String pathtodata)
   //to prevent double sampling, which should be rare anyways.
   //Also, consider that even if double sampling occurs, and a set of
   //particles with the same initial parameters are used a second time,
-  //physical processes will still be randomized.
-  
+  //physical processes will still be randomized.  
 
+  
   //Prepare the input for the terminal
   int pathlength = pathtodata.length();
   const char* pathchar = pathtodata.c_str();
@@ -128,7 +132,6 @@ void WLGDPrimaryGeneratorAction::OpenMUSUNDirectory(G4String pathtodata)
 
   
   OpenMUSUNFile();
-
   
 }//OpenMUSUNDirectory
 
@@ -148,76 +151,85 @@ void WLGDPrimaryGeneratorAction::OpenMUSUNFile()//If using the MUSUNDirectory op
 
   const char* filechar = ListOfMUSUNFiles.at(selectedfile).c_str();//Convert for open command
 
-    if(fInputFile.is_open())
-      fInputFile.close();  // close the old file
+  if(fInputFile.is_open())
+    fInputFile.close();  // close the old file
   
   G4cout << "opening file: " << filechar << G4endl;
   fInputFile.open(filechar);
   if(!(fInputFile.is_open()))
     G4cerr << "MUSUN file not valid! Name: " << filechar << G4endl;
-
   
 }//OpenMUSUNFile
 
+
+
 void WLGDPrimaryGeneratorAction::OpenArFile()
 {
-      if(fGenerator == "ArgonCaptureGammas"&&ArFileName == "")
-      {//Open the input file, only once, only if it hasn't been opened yet
-	G4cout << "OPEN AR FILE" << G4endl;
-        ArFileName = "/lfs/l1/legend/users/morella/legend1k_simulation/argon_energy_deposit/capture_data/output.txt";
-	ArFile.open(ArFileName);
-      }
-
+  if(fGenerator == "ArgonCaptureGammas"&&ArFileName == "")
+    {//Open the input file, only once, only if it hasn't been opened yet
+      G4cout << "OPEN AR FILE" << G4endl;
+      ArFileName = "/lfs/l1/legend/users/morella/legend1k_simulation/argon_energy_deposit/capture_data/output.txt";
+      G4cout << ArFileName << G4endl;
+      ArFile.open(ArFileName);
+    }
 }
+
+
 
 void WLGDPrimaryGeneratorAction::ChangeFileName(G4String newFile)
 {
-
   if(fFileName != newFile)  // check if the new file is equal to the other
-  {
-    G4cout << "opening file: " << newFile << G4endl;
-    fFileName = newFile;
-    OpenFile();  // open the new one
-  }
+    {
+      G4cout << "opening file: " << newFile << G4endl;
+      fFileName = newFile;
+      OpenFile();  // open the new one
+    }
 }
+
+
 
 void WLGDPrimaryGeneratorAction::ResetCapture(void)
 {
   //G4cout << "RESET CAPTURE" << G4endl;
-          ArGammaX = 0;
-          ArGammaY = 0;
-          ArGammaZ = 0;
-	  ArGammaE = 0;
+  ArGammaX = 0;
+  ArGammaY = 0;
+  ArGammaZ = 0;
+  ArGammaE = 0;
 }
+
+
+
 G4ThreeVector WLGDPrimaryGeneratorAction::RandomMomentum(void)
 {
   //G4cout << "RANDOM MOMENTUM"<< G4endl;
   //An independent method to generate a random momentum from -1 to 1 in each dimension
-      std::uniform_real_distribution<> rndm(0.0, 1.0);
-      std::uniform_real_distribution<>   cosThetaRnd(-1., 1.);
+  std::uniform_real_distribution<> rndm(0.0, 1.0);
+  std::uniform_real_distribution<>   cosThetaRnd(-1., 1.);
       
-      //Random azimuth and zenith for momentum
-      G4double theta = rndm(generator) * 180. * deg;
-      G4double cosTheta = cosThetaRnd(generator);
-      G4double phi   = rndm(generator) * 360. * deg;
+  //Random azimuth and zenith for momentum
+  G4double theta = rndm(generator) * 180. * deg;
+  G4double cosTheta = cosThetaRnd(generator);
+  G4double phi   = rndm(generator) * 360. * deg;
 
-            // direction
-      G4double      pz          = cosTheta;
-      G4double      px          = std::sqrt(1 - std::pow(cosTheta,2)) * cos(phi);
-      G4double      py          = std::sqrt(1 - std::pow(cosTheta,2)) * sin(phi);
+  // direction
+  G4double      pz          = cosTheta;
+  G4double      px          = std::sqrt(1 - std::pow(cosTheta,2)) * cos(phi);
+  G4double      py          = std::sqrt(1 - std::pow(cosTheta,2)) * sin(phi);
       
-      //G4double phi = CLHEP::twopi * rndm(generator);
-      //G4double theta = CLHEP::pi * rndm(generator);
+  //G4double phi = CLHEP::twopi * rndm(generator);
+  //G4double theta = CLHEP::pi * rndm(generator);
       
-      //G4double px = -std::sin(theta) * std::cos(phi);
-      //G4double py = -std::sin(theta) * std::sin(phi);
-      //G4double pz = std::cos(theta);
+  //G4double px = -std::sin(theta) * std::cos(phi);
+  //G4double py = -std::sin(theta) * std::sin(phi);
+  //G4double pz = std::cos(theta);
 
-      G4ThreeVector mom(px,py,pz);
-      return mom;
+  G4ThreeVector mom(px,py,pz);
+  return mom;
 }
 
-void WLGDPrimaryGeneratorAction::AddGamma(G4double X, G4double Y, G4double Z, G4double E, G4Event* event)
+
+
+void WLGDPrimaryGeneratorAction::AddGamma(G4double T, G4double X, G4double Y, G4double Z, G4double E, G4Event* event)
 {
   //G4cout << "ADD GAMMA" << G4endl;
   G4ParticleTable* theParticleTable = G4ParticleTable::GetParticleTable();
@@ -226,10 +238,10 @@ void WLGDPrimaryGeneratorAction::AddGamma(G4double X, G4double Y, G4double Z, G4
   fParticleGun->SetParticleMomentumDirection(RandomMomentum());
   fParticleGun->SetParticleEnergy(E*keV);
   fParticleGun->SetParticlePosition(G4ThreeVector(X*m, Y*m, Z*m));
+  fParticleGun->SetParticleTime(T*ms);
   fParticleGun->GeneratePrimaryVertex(event);
   
 }
-
 
 
 // -- depending on the name of the generator given, a different method is used to generate the primaries
@@ -250,16 +262,16 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
   
   if(fGenerator == "SimpleGammaGun")
     {            
-      G4ThreeVector momentumDir(0, 0, -1);
+      G4ThreeVector momentumDir(1, 0, 0);
       fParticleGun->SetParticleMomentumDirection(momentumDir);
       fParticleGun->SetParticleEnergy(2 * MeV);
-      fParticleGun->SetParticlePosition(G4ThreeVector(0*cm, 0*cm, 0*cm));
+      fParticleGun->SetParticlePosition(G4ThreeVector(250*cm, 0*cm, 0*cm));
       auto particleTable = G4ParticleTable::GetParticleTable();
       fParticleGun->SetParticleDefinition(particleTable->FindParticle("gamma"));
       fParticleGun->GeneratePrimaryVertex(event);
     }
-  
 
+  
   if(fGenerator == "OpticalMap")
     {
       std::uniform_real_distribution<> rndm(0.0, 1.0);
@@ -281,21 +293,59 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
       //This will lead to some gammas being sampled inside of the shield
       //These need to be taken care of elsewhere, at the beginoftrack
       //G4double radius = (2.69 - 2.17408)*rndm(generator) + 2.17408;
-      //Update 08/12: changing the radius definition and adjusting z value for an attempt at an inner optical map
+      //Update 08/12/24: changing the radius definition and adjusting z value for an attempt at an inner optical map
       //The reentrant tube has an outer radius of 95 cm, and the circumradius of the 12-sided shield is 207.055 cm
       //G4double radius = (3.25 - 2.1)*rndm(generator) + 2.1;//Good for the outer map sims
       G4double radius = (2.07055 - 0.95)*rndm(generator) + 0.95;//Hopefully works for the inner map sims
-      
       //Right now the shield panel extends from z values -2.180 to 1.020 m
-      //08/12 update for inner map sims: z is now 10 cm smaller in each direction
-      G4double z = (1.010 + 2.170)*rndm(generator) - 2.170;
+      //08/12/24 update for inner map sims: z is now 10 cm smaller in each direction
+      G4double z = (0.920 + 2.080)*rndm(generator) - 2.080;
       //Generate random x and y pair of coordinates with the radius value
       phi = CLHEP::twopi * rndm(generator);
       G4double x = radius*cos(phi);
       G4double y = radius*sin(phi);
-      
-      //For now, monoenergetic 128 nm photons, which have energy 9.686 eV
-      G4double energy = 9.686;
+
+      //Update Feb 2024: the GPS particle generator has a super useful 'confine' command, sadly the ParticleGun does not
+      //So, I just ripped the functional part from the GPS implementation in the source code :^)
+
+      G4String targetvolume = "Lar_phys";
+      auto *gNavigator = G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking();
+      G4ThreeVector null(0.,0.,0.);
+      G4ThreeVector *ptr;
+      ptr = &null;
+      G4VPhysicalVolume *theVolume;
+      bool correctvolume = false;
+      int maxloops = 10000;
+      int loops = 0;
+      while(!correctvolume)
+	{
+	  theVolume=gNavigator->LocateGlobalPointAndSetup(G4ThreeVector(x*m,y*m,z*m),ptr,true);
+	  //G4cout << theVolume->GetName() << " " << targetvolume << G4endl;
+	  if(theVolume->GetName() == targetvolume)
+	    correctvolume = true;
+	  else
+	    {
+	      z = (0.920 + 2.080)*rndm(generator) - 2.080;
+	      radius = (2.07055 - 0.95)*rndm(generator) + 0.95;
+	      phi = CLHEP::twopi * rndm(generator);
+	      x = radius*cos(phi);
+	      y = radius*sin(phi);
+	      loops++;
+	    }
+	  if(loops>maxloops)
+	    {
+	      G4cout << G4endl << "You're not hitting the target volume at all, dummy!!" << G4endl << G4endl;
+	      abort();
+	    }
+	}
+
+      //See https://cds.cern.ch/record/2713386?ln=en for a source on this scintillation spectrum for pure LAr
+      //This Gaussian isn't a completely perfect representation, but is maybe off by fractions of nm in wavelength
+      std::normal_distribution d{9.74,2.3};
+      G4double energy = d(generator);
+
+      //For Xe-doped LAr, need to copy the WLS implementation from DetectorConstruction
+      //This is actually non-trivial, so I'll wait until there's a use case
       
       //Particle is an optical photon
       G4ParticleTable* tpt = G4ParticleTable::GetParticleTable();
@@ -374,7 +424,6 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
       G4double theta, phi;
       G4double x = 0, y = 0, z = 0;
       G4int    particleID = 0;
-
     
       fInputFile >> nEvent >> particleID >> energy >> x >> y >> z >> theta >> phi;
 
@@ -394,7 +443,6 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 	      return;
 	    }
 	}//if(fInputFile.eof())
-
 
       G4double particle_time = time * s;
       energy                 = energy * GeV;
@@ -906,6 +954,8 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 	      
 	  if(!numberofcaptures)
 	    numberofcaptures = num;
+	  else if(!ArGammaT)
+	    ArGammaT = num;
 	  else if(!ArGammaX)
 	    ArGammaX = num;
 	  else if(!ArGammaY)
@@ -921,7 +971,7 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 	    {//Still more gammas in this neutron capture
 	      iss >> num;
 	      ArGammaE = num;
-	      AddGamma(ArGammaX,ArGammaY,ArGammaZ,ArGammaE,event);
+	      AddGamma(ArGammaT,ArGammaX,ArGammaY,ArGammaZ,ArGammaE,event);
 	      numberofgammas--;
 	      if(!numberofgammas)
 		ResetCapture();
@@ -933,6 +983,7 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 	  
     }//ArgonCaptureGammas
 
+  
 }//GeneratePrimaries
 
 
@@ -944,11 +995,11 @@ void WLGDPrimaryGeneratorAction::SetGenerator(const G4String& name)
     "ModeratorNeutrons", "ExternalNeutrons", "Musun_alternative", "SimpleNeutronGun", "SimpleGammaGun"
   };
   if(knownGenerators.count(name) == 0)
-  {
-    G4Exception("WLGDPrimaryGeneratorAction::SetGenerator", "WLGD0101", JustWarning,
-                ("Invalid generator name '" + name + "'").c_str());
-    return;
-  }
+    {
+      G4Exception("WLGDPrimaryGeneratorAction::SetGenerator", "WLGD0101", JustWarning,
+		  ("Invalid generator name '" + name + "'").c_str());
+      return;
+    }
   fGenerator = name;
 }
 
@@ -993,21 +1044,21 @@ void WLGDPrimaryGeneratorAction::DefineCommands()
   // musun file command
   auto& musunfileCmd =
     fMessenger
-      ->DeclareMethod("setMUSUNFile",
-                      &WLGDPrimaryGeneratorAction::shortcutToChangeFileName)
-      .SetGuidance("Set MUSUN file name")
-      .SetParameterName("filename", false)
-      .SetDefaultValue("./musun_gs_100M.dat");
+    ->DeclareMethod("setMUSUNFile",
+		    &WLGDPrimaryGeneratorAction::shortcutToChangeFileName)
+    .SetGuidance("Set MUSUN file name")
+    .SetParameterName("filename", false)
+    .SetDefaultValue("./musun_gs_100M.dat");
 
-    auto& musundirectoryCmd =
+  auto& musundirectoryCmd =
     fMessenger
-      ->DeclareMethod("setMUSUNDirectory",
-                      &WLGDPrimaryGeneratorAction::OpenMUSUNDirectory)
-      .SetGuidance("Set full path of directory containing multiple MUSUN files")
-      .SetParameterName("directoryname", false)
-      .SetDefaultValue("");
+    ->DeclareMethod("setMUSUNDirectory",
+		    &WLGDPrimaryGeneratorAction::OpenMUSUNDirectory)
+    .SetGuidance("Set full path of directory containing multiple MUSUN files")
+    .SetParameterName("directoryname", false)
+    .SetDefaultValue("");
 
-    // generator command
+  // generator command
   // switch command
   fMessenger->DeclareMethod("setGenerator", &WLGDPrimaryGeneratorAction::SetGenerator)
     .SetGuidance("Set generator model of primary muons")
@@ -1023,7 +1074,7 @@ void WLGDPrimaryGeneratorAction::DefineCommands()
     .SetGuidance("ExternalNeutrons = generate neutrons from outside the water tank")
     .SetGuidance("ArgonCaptureGammas = De-excitation gammas from n capture on Ar 40")
     .SetCandidates(
-      "MeiAndHume Musun Musun_alternative Ge77m Ge77andGe77m ModeratorNeutrons ExternalNeutrons OpticalMap SimpleNeutronGun SimpleGammaGun ArgonCaptureGammas");
+		   "MeiAndHume Musun Musun_alternative Ge77m Ge77andGe77m ModeratorNeutrons ExternalNeutrons OpticalMap SimpleNeutronGun SimpleGammaGun ArgonCaptureGammas");
 
   fMessenger->DeclareMethod("SimpleNeutronGun_coord_x", &WLGDPrimaryGeneratorAction::SetSimpleNeutronGun_coord_x)    
     .SetGuidance("Set the x coordinate for the neutron gun")

@@ -23,6 +23,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   // Create directories
   analysisManager->SetVerboseLevel(1);
   analysisManager->SetNtupleMerging(true);
+  //Warning: SetNtupleMerging can cause issues with outputs that are not thread-safe!
 
   // -- write out some branches only if the information is also stored
 
@@ -322,12 +323,13 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleDColumn("KineticEnergy"); //4
   analysisManager->CreateNtupleIColumn("TrackID");       //5
   analysisManager->CreateNtupleIColumn("ID");            //6
-  analysisManager->CreateNtupleIColumn("PID");           //7
-  analysisManager->CreateNtupleSColumn("Process");       //8
-  analysisManager->CreateNtupleSColumn("CreatorProcess");//9
-  analysisManager->CreateNtupleSColumn("Material");      //10
-  analysisManager->CreateNtupleSColumn("Volume");        //11
-  
+  analysisManager->CreateNtupleIColumn("EventID");       //7
+  analysisManager->CreateNtupleIColumn("PID");           //8
+  analysisManager->CreateNtupleSColumn("Process");       //9
+  analysisManager->CreateNtupleSColumn("CreatorProcess");//10
+  analysisManager->CreateNtupleSColumn("Material");      //11
+  analysisManager->CreateNtupleSColumn("Volume");        //12
+  analysisManager->CreateNtupleDColumn("EDep");          //13  
   analysisManager->FinishNtuple();
 
   
@@ -343,6 +345,10 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleIColumn("EventID");       //7
   analysisManager->CreateNtupleSColumn("CreatorProcess");//8
   analysisManager->CreateNtupleSColumn("Volume");        //9
+  analysisManager->CreateNtupleDColumn("px");             //10
+  analysisManager->CreateNtupleDColumn("py");             //11
+  analysisManager->CreateNtupleDColumn("pz");             //12
+  
   
   analysisManager->FinishNtuple();
 
@@ -363,6 +369,9 @@ WLGDRunAction::~WLGDRunAction() { delete G4AnalysisManager::Instance(); }
 
 void WLGDRunAction::BeginOfRunAction(const G4Run* /*run*/)
 {
+  //Start the clock
+  runtimer = double(clock());
+  
   // Get analysis manager
   auto analysisManager = G4AnalysisManager::Instance();
   // Open an output file
@@ -425,6 +434,8 @@ void WLGDRunAction::EndOfRunAction(const G4Run* /*run*/)
     }
     outputStream_2.close();
   }
+  runtimer = double(clock()) - runtimer;
+  G4cout << G4endl << "Total processing time: " << runtimer/1000000 << " seconds." << G4endl << G4endl;
 }
 
 void WLGDRunAction::SetWriteOutNeutronProductionInfo(G4int answer)

@@ -35,6 +35,8 @@
 #include "G4LogicalBorderSurface.hh"
 #include "G4MaterialPropertiesTable.hh"
 
+//Jan 2024: Testing CADMesh integration
+#include "CADMesh.hh"
 
 WLGDDetectorConstruction::WLGDDetectorConstruction()
 {
@@ -253,7 +255,7 @@ void WLGDDetectorConstruction::DefineMaterials()
   PolyEthylene->AddElement(C, 0.857);
 
   G4double density = 3.01 * g / cm3;  // https://www.sigmaaldrich.com/catalog/product/aldrich/203300
-                                      // @room temp
+                                      // at room temp
   gadoliniumSulfate = new G4Material("GadoliniumSulfate", density, 3);  // Gd2(SO4)3
   gadoliniumSulfate->AddElement(elGd, 2);
   gadoliniumSulfate->AddElement(elS, 3);
@@ -316,7 +318,6 @@ void WLGDDetectorConstruction::DefineMaterials()
       G4cout << "___________________________________________" << G4endl;
     }
   
-  //auto* eLAr = new G4Element("LAr", "Ar", 18., 39.95 * g / mole);
   larMat = G4Material::GetMaterial("G4_lAr");
   elXe   = new G4Element("LXe", "Xe", 54., 131.29 * g / mole);
   eHe3   = new G4Element("He3", "He3", 1);
@@ -336,7 +337,10 @@ void WLGDDetectorConstruction::DefineMaterials()
   CombinedArXeHe3->AddElement(eHe3, fHe3Conc);
   CombinedArXeHe3->AddElement(elXe, fXeConc);
 
-  //G4cout << CombinedArXeHe3 << G4endl;
+  steelMat      = G4Material::GetMaterial("G4_STAINLESS-STEEL");
+  
+  steelMat_WLSR = new G4Material("steelMat_WLSR",7.85 * g / cm, 1, kStateSolid, 87. * kelvin);
+  steelMat_WLSR->AddMaterial(steelMat, 1);  
 
   PEN = new G4Material("PEN", 1.35 * g / cm3, 3, kStateSolid);
   PEN->AddElement(C,14);
@@ -355,8 +359,31 @@ void WLGDDetectorConstruction::DefineMaterials()
   tetratex->AddElement(F,0.76);
   tetratex->AddElement(C,0.24);
 
+  TPBonTTX = new G4Material("TPBonTTX", 1.08 * g / cm3, 2, kStateSolid);//Effectively, should only interact with the TPB
+  TPBonTTX->AddElement(C,28);
+  TPBonTTX->AddElement(H,22);
+
+  
   silicon = new G4Material("silicon", 3.74 * g / cm3, 1, kStateSolid);  
   silicon->AddElement(Si,1);
+
+  //The following were previously defined at the beginning of each setup, no idea why
+  //If there are bugs, we can move them back there - CJ, Jan 2024
+
+  worldMaterial = G4Material::GetMaterial("G4_Galactic");
+  airMat        = G4Material::GetMaterial("G4_AIR");
+  copperMat     = G4Material::GetMaterial("G4_Cu");
+  //copperMat     = G4Material::GetMaterial("steelMat_WLSR");
+  stdRock       = G4Material::GetMaterial("StdRock");
+  puMat         = G4Material::GetMaterial("polyurethane");
+  roiMat        = G4Material::GetMaterial("enrGe");
+  worldMaterial = G4Material::GetMaterial("G4_Galactic");
+  waterMat      = G4Material::GetMaterial("G4_WATER");
+  if(fWithGdWater == 1)
+    waterMat = water;
+  if(fWithWoWater == 1)
+    waterMat = airMat;
+  BoratedPETMat = G4Material::GetMaterial("BoratedPET");
 
 }//DefineMaterials()
 
@@ -490,21 +517,7 @@ void WLGDDetectorConstruction::ConstructSDandField()
 
 auto WLGDDetectorConstruction::SetupAlternative() -> G4VPhysicalVolume*
 {
-  // Get materials
-  worldMaterial = G4Material::GetMaterial("G4_Galactic");
-  //auto* larMat        = G4Material::GetMaterial("G4_lAr");
-  airMat        = G4Material::GetMaterial("G4_AIR");
-  steelMat      = G4Material::GetMaterial("G4_STAINLESS-STEEL");
-  copperMat     = G4Material::GetMaterial("G4_Cu");
-  stdRock       = G4Material::GetMaterial("StdRock");
-  puMat         = G4Material::GetMaterial("polyurethane");
-  roiMat        = G4Material::GetMaterial("enrGe");
-  larMat_alt    = G4Material::GetMaterial("CombinedArXeHe3");
-
-  if(fXeConc != 0 || fHe3Conc != 0)
-    larMat = larMat_alt;
-
-
+  
   // size parameter, unit [cm]
 
   // cavern
@@ -736,23 +749,9 @@ auto WLGDDetectorConstruction::SetupAlternative() -> G4VPhysicalVolume*
 auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 {
   
-  //~Not sure this belongs here
     if(fOpticalOption)
     SetupOpticalProperties();
   
-  // Get materials
-  worldMaterial = G4Material::GetMaterial("G4_Galactic");
-  // auto* larMat        = G4Material::GetMaterial("G4_lAr");
-  airMat   = G4Material::GetMaterial("G4_AIR");
-  waterMat = G4Material::GetMaterial("G4_WATER");
-  if(fWithGdWater == 1)
-    waterMat = water;
-  if(fWithWoWater == 1)
-    waterMat = airMat;
-  steelMat      = G4Material::GetMaterial("G4_STAINLESS-STEEL");
-  copperMat     = G4Material::GetMaterial("G4_Cu");
-  stdRock       = G4Material::GetMaterial("StdRock");
-  roiMat        = G4Material::GetMaterial("enrGe");
   BoratedPETMat = G4Material::GetMaterial("BoratedPET");
   if(fSetMaterial == "PolyEthylene")
     BoratedPETMat = G4Material::GetMaterial("PolyEthylene");
@@ -947,22 +946,40 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   //
   auto* cinnSolid     = new G4Tubs("Cinn", 0.0 * cm, (cryrad - cryowall - vacgap) * cm,
                                    (cryhheight - cryowall - vacgap) * cm, 0.0, CLHEP::twopi);
-  auto* fCinnLogical  = new G4LogicalVolume(cinnSolid, steelMat, "Cinn_log");
+  G4LogicalVolume* fCinnLogical;
+  fCinnLogical  = new G4LogicalVolume(cinnSolid, steelMat, "Cinn_log");
   auto* fCinnPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fCinnLogical,
                                           "Cinn_phys", fCvacLogical, false, 0, true);
 
+  double TPBthickness = 0.001;//in cm
+  //The TTX is actually 254 um thick (.0254 cm), but I made this material both a reflector
+  //and a WLS, because I don't want to add two consecutive incredibly thin layers
+  //That's just asking for bounding issues in G4
+  //The shorter WLS absorption lengths are like .00001 cm anyways
+  G4Tubs *cryoWLSRSolid;
+  G4LogicalVolume* cryoWLSRLogical;
+  
+  if(fOpticalOption)//Add WLSR around cryostat inside
+    {
+      cryoWLSRSolid     = new G4Tubs("cryoWLSR", 0, (cryrad - 2 * cryowall - vacgap + TPBthickness) * cm,
+                                   (cryhheight - 2 * cryowall - vacgap + TPBthickness) * cm, 0.0, CLHEP::twopi);
+      cryoWLSRLogical  = new G4LogicalVolume(cryoWLSRSolid, TPBonTTX, "cryoWLSR_log");
+      cryoWLSRPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), cryoWLSRLogical,
+					  "cryoWLSR_phys", fCinnLogical, false, 0, true);
+    }
   //
   // LAr bath
-  //
-  auto* larSolid     = new G4Tubs("LAr", 0.0 * cm, (cryrad - 2 * cryowall - vacgap) * cm,
-                                  (cryhheight - 2 * cryowall - vacgap) * cm, 0.0, CLHEP::twopi);
-  auto* fLarLogical  = new G4LogicalVolume(larSolid, larMat, "Lar_log");
-  fOuterLArPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fLarLogical,
-                                         "Lar_phys", fCinnLogical, false, 0, true);
 
+  auto* larSolid     = new G4Tubs("LAr", 0.0 * cm, (cryrad - 2 * cryowall - vacgap) * cm,
+                                      (cryhheight - 2 * cryowall - vacgap) * cm, 0.0, CLHEP::twopi);
+  auto* fLarLogical  = new G4LogicalVolume(larSolid, larMat, "Lar_log");
+
+  if(fOpticalOption)
+  fOuterLArPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fLarLogical,"Lar_phys", cryoWLSRLogical, false, 0, true);
+  else
+      fOuterLArPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fLarLogical,"Lar_phys", fCinnLogical, false, 0, true);    
   //
   // cryostat Lid
-  //
   auto* lidSolid =
     new G4Tubs("Lid", 0.0 * cm, cryrad * cm, cryowall / 2.0 * cm, 0.0, CLHEP::twopi);
   auto* fLidLogical = new G4LogicalVolume(lidSolid, steelMat, "Lid_log");
@@ -973,7 +990,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   auto* fBotPhysical =
     new G4PVPlacement(nullptr, G4ThreeVector(0., 0., -(cryhheight + cryowall / 2.0) * cm),
                       fBotLogical, "Bot_phys", fWaterLogical, false, 0, true);
-
+  
   //
   // copper tubes, hollow cylinder shell
   //
@@ -994,7 +1011,34 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 
   auto* boratedPETSolid_Box = new G4Box("BoratedPET", b_length, b_width, b_height);
 
-  //
+  auto* copperWLSRSolid = new G4Tubs("CopperWLSR", curad * cm, (curad+TPBthickness) * cm,
+  				     (cuhheight + TPBthickness) * cm, 0.0, CLHEP::twopi);
+  //To change shape for testing purposes
+  //auto* copperWLSRSolid = new G4Sphere("CopperWLSR", 49.9*cm, 50 * cm,0*deg,360*deg,0*deg,180*deg);
+  //G4OpticalSurface* ArSurface = new G4OpticalSurface("ArSurface");
+  //ArSurface->SetType(dielectric_dielectric);
+  //ArSurface->SetFinish(PolishedTeflon_LUT);
+  //ArSurface->SetModel(unified);
+  //G4OpticalSurface* TPBSurface = new G4OpticalSurface("TPBSurface");
+  //TPBSurface->SetType(dielectric_dielectric);
+  //TPBSurface->SetFinish(groundfrontpainted);
+  //TPBSurface->SetModel(unified);
+
+  if(fOpticalOption)
+    {//Add WLSR coating around copper tube
+      auto* fCopperWLSRLogical = new G4LogicalVolume(copperWLSRSolid, TPBonTTX, "CopperWLSR_log");
+      new G4PVPlacement(nullptr, G4ThreeVector(0., 0., cushift * cm),
+			fCopperWLSRLogical, "CopperWLSR_phys", fLarLogical, false, 0, true);
+      //To change shape for testing purposes
+      //new G4PVPlacement(nullptr, G4ThreeVector(1.5*m, 0., 0 * cm),fCopperWLSRLogical, "CopperWLSR_phys", fLarLogical, false, 0, true);
+      
+    }
+
+  //G4LogicalBorderSurface* ArToCryoSurface = new G4LogicalBorderSurface("ArToCryoSurface",fOuterLArPhysical, cryoWLSRPhysical,TPBSurface);
+  //G4LogicalBorderSurface* ArToCuSurface = new G4LogicalBorderSurface("ArToCuSurface",fOuterLArPhysical, fCopperWLSRPhysical,TPBSurface);
+  //G4LogicalBorderSurface* CuToArSurface = new G4LogicalBorderSurface("CuToArSurface",fCopperWLSRPhysical,fOuterLArPhysical,ArSurface);  
+
+  
   // copper tubes, hollow cylinder shell
   auto* copperSolid = new G4Tubs("Copper", (curad - copper) * cm, curad * cm,
                                  cuhheight * cm, 0.0, CLHEP::twopi);
@@ -1324,6 +1368,19 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 
   if(fWithBoratedPET == 5)
     {
+
+      //CADMesh implementation, commented out for now
+      /*auto mesh = CADMesh::TessellatedMesh::FromSTL("polyshield.stl");
+
+      mesh->SetScale(50);//in mm, presumably?
+
+      mesh->SetOffset(1500,0,0);
+
+      G4LogicalVolume *cube_log = new G4LogicalVolume(mesh->GetSolid(),BoratedPETMat,"cube_log");
+
+      new G4PVPlacement(nullptr,G4ThreeVector(0,0,0),cube_log,"cube_phys",fLarLogical,false,0,true);
+      */
+      
       //For use with the LEGEND-1000 single reentrance tube design only
       //Shield is made of a hollow n-sided prism, with a hole in the top for the reentrant tube
       //The size of the hole is fixed, but everything else is set by the user, including n
@@ -1492,9 +1549,6 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 			    0, 
 			    true);
 	  *//*
-	  G4OpticalSurface* SScoating = new G4OpticalSurface("SScoating",unified,groundfrontpainted,dielectric_metal,0.9);
-	  
-	  G4LogicalBorderSurface* SScoatinglog = new G4LogicalBorderSurface("SScoatinglog",fLarPhysical,fCinnPhysical,SScoating);
 
 	  //G4MaterialPropertiesTable *SScoatingMPT = G4Material::GetMaterial("G4_STAINLESS-STEEL")->GetMaterialPropertiesTable();
 	  G4MaterialPropertiesTable *SScoatingMPT = new G4MaterialPropertiesTable();
@@ -1518,8 +1572,7 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
 	  SScoating->SetMaterialPropertiesTable(SScoatingMPT);
 	    */	  
 	}//If optics are enabled
-            
-      
+
     }//if(fWithBoratedPET == 5)
 
   
@@ -1598,9 +1651,6 @@ auto WLGDDetectorConstruction::SetupBaseline() -> G4VPhysicalVolume*
   fBoratedPETLogical_Tube->SetVisAttributes(testVisAtt4);
   fBoratedPETLogical_Box->SetVisAttributes(testVisAtt4);
 
-  //~if(fOpticalOption)
-  //~ SetupOpticalProperties();
-  
   return fWorldPhysical;
 
 }//SetupBaseline()
@@ -1612,23 +1662,8 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
 
   // Full copy of baseline set up but smaller as a Gerda mock-up.
 
-  // Get materials
-  worldMaterial = G4Material::GetMaterial("G4_Galactic");
-  //auto* larMat        = G4Material::GetMaterial("G4_lAr");
-  airMat        = G4Material::GetMaterial("G4_AIR");
-  waterMat      = G4Material::GetMaterial("G4_WATER");
-  if(fWithGdWater == 1)
-    waterMat = water;
-  if(fWithWoWater == 1)
-    waterMat = airMat;
-  steelMat   = G4Material::GetMaterial("G4_STAINLESS-STEEL");
-  copperMat  = G4Material::GetMaterial("G4_Cu");
-  stdRock    = G4Material::GetMaterial("StdRock");
-  roiMat     = G4Material::GetMaterial("enrGe");
-  larMat_alt = G4Material::GetMaterial("CombinedArXeHe3");
-
   if(fXeConc != 0 || fHe3Conc != 0)
-    larMat = larMat_alt;
+    larMat = G4Material::GetMaterial("CombinedArXeHe3");
 
   // constants
   // size parameter, unit [cm]
@@ -1746,21 +1781,22 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
   auto* fLarPhysical = new G4PVPlacement(nullptr, G4ThreeVector(), fLarLogical,
                                          "Lar_phys", fCinnLogical, false, 0, true);
 
-/*
+
   //
   // cryostat Lid
   //
   auto* lidSolid =
     new G4Tubs("Lid", 0.0 * cm, cryrad * cm, cryowall / 2.0 * cm, 0.0, CLHEP::twopi);
   auto* fLidLogical = new G4LogicalVolume(lidSolid, steelMat, "Lid_log");
+  //No longer convinced the lids are necessary; must test
   auto* fLidPhysical =
-    new G4PVPlacement(nullptr, G4ThreeVector(0., 0., (cryhheight + cryowall / 2.0) * cm),
-                      fLidLogical, "Lid_phys", fWaterLogical, false, 0, true);
+  new G4PVPlacement(nullptr, G4ThreeVector(0., 0., (cryhheight + cryowall / 2.0) * cm),
+  fLidLogical, "Lid_phys", fWaterLogical, false, 0, true);
   auto* fBotLogical = new G4LogicalVolume(lidSolid, steelMat, "Bot_log");
   auto* fBotPhysical =
     new G4PVPlacement(nullptr, G4ThreeVector(0., 0., -(cryhheight + cryowall / 2.0) * cm),
-                      fBotLogical, "Bot_phys", fWaterLogical, false, 0, true);
-*/
+		      fBotLogical, "Bot_phys", fWaterLogical, false, 0, true);
+
 
   //
   // String tower
@@ -1860,10 +1896,12 @@ auto WLGDDetectorConstruction::SetupHallA() -> G4VPhysicalVolume*
 
 }//SetupHallA()
 
+
+
 void WLGDDetectorConstruction::SetupOpticalProperties(void)
 {
-  // - Gives the LAr scintillation properties (now)
-  // - Gives other materials within the cryostat optical properties (later)
+  // - Gives the LAr scintillation properties
+  // - Gives other materials within the cryostat optical properties
   // - Makes the code slow as hell if applied at the inappropriate time
   //Most of this is adapted from some of the MaGe source code
 
@@ -1939,18 +1977,18 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
       LArAbsArray[i] = LArAbsLength((LambdaE/E));
 
       LArScintArray[i] = LArScintSpec((LambdaE/EScint));
-
+      
       //G4cout << G4endl << i << "   " << LambdaE/E/nm << " nm wavelength" <<  G4endl << "LAr refractive index: " << LArRIArray[i] << G4endl << "LAr Rayleigh value: " << LArRaylArray[i] << G4endl << "LAr absorption length: " << LArAbsArray[i] << G4endl << G4endl;
       
     }//for(int i
 
   //Finally, with all the optical properties calculated, create a G4 object to store them and assign them to the LAr
-  
+
   G4MaterialPropertiesTable* ArMPT = new G4MaterialPropertiesTable();
   
   //Add array properties
   ArMPT->AddProperty("RINDEX",   LArEnergyArray,LArRIArray,ArEntries);
-  ArMPT->AddProperty("RAYLEIGH", LArEnergyArray,LArRaylArray,ArEntries);
+  ArMPT->AddProperty("RAYLEIGH", LArEnergyArray,LArRaylArray,ArEntries);  
   ArMPT->AddProperty("ABSLENGTH",LArEnergyArray,LArAbsArray,ArEntries);
   ArMPT->AddProperty("FASTCOMPONENT",LArScintEnergyArray,LArScintArray,ArEntries);
   ArMPT->AddProperty("SLOWCOMPONENT",LArScintEnergyArray,LArScintArray,ArEntries);
@@ -1966,8 +2004,71 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   larMat->SetMaterialPropertiesTable(ArMPT);
   larMat->GetIonisation()->SetBirksConstant(5.1748e-4*cm/MeV);
 
+  
+  //January 2024 update: L1000 atmAr may very well be doped with xenon
+  //This changes the optical properties significantly
+  //These changes are sensitive to the concentration of xenon
+  //A "proper" implementation would incorporate functions which take
+  //the concentration as an input, and adjust the scintillation
+  //properties accordingly. This is a lot of work for a feature which
+  //hasn't proven its usefulness yet, so for now, the properties are
+  //set to those of 100 ppm (molar) Xe-doped LAr
+  
+  photon_yield *= 1.2;//https://arxiv.org/pdf/2012.06527.pdf
+  //Some would say 1.25, but we like to be conservative in simulations
+
+  yieldratio = .0686; //https://indico.legend-exp.org/event/1153/contributions/6221/attachments/3207/4841/UNM%20Xe_Doping_LEGEND.pdf
+  tau_l = 22*ns;//https://arxiv.org/ftp/arxiv/papers/1403/1403.0525.pdf
+
+  //The absorption length function set up for the LAr works just as well for the Xe-doped LAr, since the Xe doping works by
+  //shifting the wavelengths of the VUV light to a more favorable value, rather than physically altering the medium
+
+  //Finally, we must set up a function to describe the wavelength spectrum of the Xe scintillation light
+  //Making a note here that technically, there's even a third scintillation peak of mixed Xe-Ar states centered around 150 nm
+  //However, this peak is much smaller than the Ar2 peak, which is already <10% of the total scintillation emission, so...
+  //Not to mention the 1150 nm weak IR emissions, which are unexplained, or the broad-spectrum scintillation at ~10^-4 intensity
+  //Anyways, on to the implementation
+
+  
+  G4double LArXeScintArray[ArEntries];//May as well use the same number of bins
+  G4double LArXeScintEnergyArray[ArEntries];
+
+  EnergyMax = LambdaE/(136*nm);
+  EnergyMinScint = LambdaE/(220*nm);
+  dES = (EnergyMax-EnergyMinScint)/(ArEntries - 1);
+
+  EScint = EnergyMinScint - dES;
 
 
+  for(int i = 0; i < ArEntries; i++)
+    {
+
+      EScint+=dES;//Starts at EnergyMinScint
+      LArXeScintEnergyArray[i] = EScint;
+      LArXeScintArray[i] = LArXeScintSpec((LambdaE/EScint));
+    }
+
+  G4MaterialPropertiesTable* ArXeMPT = new G4MaterialPropertiesTable();
+
+  //Add array properties
+  ArXeMPT->AddProperty("RINDEX",   LArEnergyArray,LArRIArray,ArEntries);  //Same
+  ArXeMPT->AddProperty("RAYLEIGH", LArEnergyArray,LArRaylArray,ArEntries);//Same
+  ArXeMPT->AddProperty("ABSLENGTH",LArEnergyArray,LArAbsArray,ArEntries); //Same
+
+  ArXeMPT->AddProperty("FASTCOMPONENT",LArScintEnergyArray,LArScintArray,ArEntries);    //Same
+  ArXeMPT->AddProperty("SLOWCOMPONENT",LArXeScintEnergyArray,LArXeScintArray,ArEntries);//Changed
+
+  //Add single-value properties
+  ArXeMPT->AddConstProperty("SCINTILLATIONYIELD",photon_yield);//Changed
+  ArXeMPT->AddConstProperty("FASTTIMECONSTANT",tau_s);         //Same
+  ArXeMPT->AddConstProperty("SLOWTIMECONSTANT",tau_l);         //Changed
+  ArXeMPT->AddConstProperty("YIELDRATIO",yieldratio);          //Changed
+  ArXeMPT->AddConstProperty("RESOLUTIONSCALE",fano);           //Same
+
+  CombinedArXeHe3->SetMaterialPropertiesTable(ArXeMPT);
+  CombinedArXeHe3->GetIonisation()->SetBirksConstant(5.1748e-4*cm/MeV);
+
+  
   //For most other materials, we can simply set the absorption length to be arbitrarily small
   //For the fibers, we need to be more careful
   //Also, for all materials within the cryostat, we have to define the reflection properties
@@ -2000,8 +2101,7 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
 
 
   //Cu optical properties
-  //Dec 2023 update: for now, replace the copper optical properties with TPB on tetratex properties
-  /*  
+   
   const static int CuEntries = 424;
 
   G4double CuWavelengthArray[CuEntries] = {110,150,180,280,281,282,283,284,285,286,287,288,289,290,291,292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,346,347,348,349,350,351,352,353,354,355,356,357,358,359,360,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,419,420,421,422,423,424,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,446,447,448,449,450,451,452,453,454,455,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,471,472,473,474,475,476,477,478,479,480,481,482,483,484,485,486,487,488,489,490,491,492,493,494,495,496,497,498,499,500,501,502,503,504,505,506,507,508,509,510,511,512,513,514,515,516,517,518,519,520,521,522,523,524,525,526,527,528,529,530,531,532,533,534,535,536,537,538,539,540,541,542,543,544,545,546,547,548,549,550,551,552,553,554,555,556,557,558,559,560,561,562,563,564,565,566,567,568,569,570,571,572,573,574,575,576,577,578,579,580,581,582,583,584,585,586,587,588,589,590,591,592,593,594,595,596,597,598,599,600,601,602,603,604,605,606,607,608,609,610,611,612,613,614,615,616,617,618,619,620,621,622,623,624,625,626,627,628,629,630,631,632,633,634,635,636,637,638,639,640,641,642,643,644,645,646,647,648,649,650,651,652,653,654,655,656,657,658,659,660,661,662,663,664,665,666,667,668,669,670,671,672,673,674,675,676,677,678,679,680,681,682,683,684,685,686,687,688,689,690,691,692,693,694,695,696,697,698,699,700};
@@ -2026,9 +2126,8 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
 
   copperMat = G4Material::GetMaterial("G4_Cu");
   copperMat->SetMaterialPropertiesTable(CuMPT);
-  */
   
-  
+
   //A hopefully proper update to the reentrant tube's outside optical properties
   //The reflectivity is handled by the tetratex (TTX), but the absorption and WLS is handled by the TPB
   //The data for these two materials have been separated by variable name
@@ -2049,12 +2148,21 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   //Add array properties
   G4double TPB_QuantumEff   = 1.2;
   G4double TPB_TimeConstant = 0.01 *ns;
+
   G4double TPB_RefrIndex    = 1.635;
-  G4double TPB_absorption_wavelength[33] = {50,250,274.25569,281.08581,287.39054,296.84764,302.62697,305.77933,308.9317,313.13485,318.38879,323.11734,326.7951,330.99825,336.25219,345.18389,353.59019,358.84413,364.62347,367.77583,371.97898,375.65674,380.91068,382.48687,386.16462,388.2662,391.41856,398.77408,402.45184,408.23117,412.43433,416.11208,420};
-  G4double TPB_absorption_energy[33] = {24.7968*eV,4.95937*eV,4.52075*eV,4.4109*eV,4.31414*eV,4.17669*eV,4.09693*eV,4.05469*eV,4.01332*eV,3.95945*eV,3.89411*eV,3.83713*eV,3.79394*eV,3.74577*eV,3.68724*eV,3.59183*eV,3.50644*eV,3.4551*eV,3.40033*eV,3.37119*eV,3.3331*eV,3.30046*eV,3.25494*eV,3.24153*eV,3.21066*eV,3.19328*eV,3.16756*eV,3.10913*eV,3.08072*eV,3.03711*eV,3.00616*eV,2.97959*eV,2.952*eV};
-  G4double TPB_absorption_length[33] = {350*nm,350*nm,102.76732*nm,102.79803*nm,102.82637*nm,101.52807*nm,100.23004*nm,89.07908*nm,78.13679*nm,71.2934*nm,62.54161*nm,56.32158*nm,50.05675*nm,46.887*nm,46.28649*nm,45.70102*nm,45.71782*nm,50.12696*nm,55.68845*nm,65.19302*nm,77.33125*nm,95.40979*nm,124.06602*nm,163.43344*nm,212.50585*nm,302.87049*nm,431.68105*nm,710.9301*nm,1040.25287*nm,1625.47721*nm,2378.4985*nm,3815.0562*nm,100000000000*nm};
+
+  G4double TPB_absorption_wavelength[33] = {50,250,274.25569,281.08581,287.39054,296.84764,302.62697,305.77933,308.9317,313.13485,318.38879,323.11734,326.7951,330.99825,336.25219,345.18389,353.59019,358.84413,364.62347,367.77583,371.97898,375.65674,380.91068,382.48687,386.16462,388.2662,391.41856,398.77408,402.45184,408.23117,412.43433,416.11208,1178};
+  G4double TPB_absorption_energy[33] = {24.7968*eV,4.95937*eV,4.52075*eV,4.4109*eV,4.31414*eV,4.17669*eV,4.09693*eV,4.05469*eV,4.01332*eV,3.95945*eV,3.89411*eV,3.83713*eV,3.79394*eV,3.74577*eV,3.68724*eV,3.59183*eV,3.50644*eV,3.4551*eV,3.40033*eV,3.37119*eV,3.3331*eV,3.30046*eV,3.25494*eV,3.24153*eV,3.21066*eV,3.19328*eV,3.16756*eV,3.10913*eV,3.08072*eV,3.03711*eV,3.00616*eV,2.97959*eV,1.052*eV};
+  G4double TPB_absorption_length[33] = {350*nm,350*nm,102.76732*nm,102.79803*nm,102.82637*nm,101.52807*nm,100.23004*nm,89.07908*nm,78.13679*nm,71.2934*nm,62.54161*nm,56.32158*nm,50.05675*nm,46.887*nm,46.28649*nm,45.70102*nm,45.71782*nm,50.12696*nm,55.68845*nm,65.19302*nm,77.33125*nm,95.40979*nm,124.06602*nm,163.43344*nm,212.50585*nm,302.87049*nm,431.68105*nm,710.9301*nm,1040.25287*nm,1625.47721*nm,2378.4985*nm,3815.0562*nm,1000000000*m};
+
+
+
   G4double TPB_refraction[33];
-  
+for(int ii = 0; ii < 33; ii++)
+  TPB_refraction[ii] = TPB_RefrIndex;
+
+
+ 
   G4double TPB_emission_wavelength[73] = {353.45694,356.8928,360.32851,363.76375,367.19983,370.63606,373.44735,380.78887,385.63962,389.08314,392.6336,395.22414,399.49461,402.9634,406.42738,409.8887,413.66521,417.11474,420.56068,423.98695,427.41172,430.83778,434.2657,437.66231,440.96718,445.63913,448.59148,451.97578,455.38116,459.9268,464.14798,467.57144,469.75168,474.7285,482.36447,487.1961,490.62402,494.05341,496.70284,500.91343,504.34515,507.77818,511.2103,514.64097,518.07489,521.50815,524.94158,528.37382,531.80774,535.24179,538.67518,545.54433,548.9797,552.41406,555.84982,558.34851,565.10458,567.56107,573.33843,576.77279,580.20586,583.64376,587.07847,590.42149,593.94721,597.38369,599.88171,605.50064,608.46781,615.96514,620.80621,624.24025,627.05118};
   G4double TPB_emission_energy[73] = {3.50776*eV,3.47399*eV,3.44087*eV,3.40837*eV,3.37648*eV,3.34517*eV,3.31999*eV,3.25598*eV,3.21503*eV,3.18657*eV,3.15776*eV,3.13706*eV,3.10353*eV,3.07681*eV,3.05059*eV,3.02483*eV,2.99721*eV,2.97242*eV,2.94807*eV,2.92425*eV,2.90081*eV,2.87775*eV,2.85503*eV,2.83287*eV,2.81164*eV,2.78217*eV,2.76386*eV,2.74316*eV,2.72265*eV,2.69574*eV,2.67122*eV,2.65166*eV,2.63936*eV,2.61169*eV,2.57034*eV,2.54485*eV,2.52707*eV,2.50953*eV,2.49614*eV,2.47516*eV,2.45832*eV,2.4417*eV,2.42531*eV,2.40914*eV,2.39317*eV,2.37742*eV,2.36187*eV,2.34652*eV,2.33137*eV,2.31641*eV,2.30165*eV,2.27267*eV,2.25845*eV,2.24441*eV,2.23053*eV,2.22055*eV,2.194*eV,2.18451*eV,2.1625*eV,2.14962*eV,2.1369*eV,2.12431*eV,2.11188*eV,2.09993*eV,2.08746*eV,2.07545*eV,2.06681*eV,2.04763*eV,2.03765*eV,2.01284*eV,1.99715*eV,1.98616*eV,1.97726*eV};
   
@@ -2072,16 +2180,18 @@ void WLGDDetectorConstruction::SetupOpticalProperties(void)
   
   G4MaterialPropertiesTable* TPBTTXMPT = new G4MaterialPropertiesTable();
 
+  double eshort[2] = {0.1*eV,10*eV};
+  double tshort[2] = {1.0,1.0};
+
   TPBTTXMPT->AddProperty     ("RINDEX",               TPB_absorption_energy, TPB_refraction,33);
   TPBTTXMPT->AddProperty     ("REFLECTIVITY",         TTXEnergyArray,TTXReflArray,TTXn);
   TPBTTXMPT->AddProperty     ("WLSABSLENGTH",         TPB_absorption_energy, TPB_absorption_length,33);
   TPBTTXMPT->AddProperty     ("WLSCOMPONENT",         TPB_emission_energy, TPB_emission_intensity,73);
   TPBTTXMPT->AddConstProperty("WLSTIMECONSTANT",      TPB_TimeConstant);
   TPBTTXMPT->AddConstProperty("WLSMEANNUMBERPHOTONS", TPB_QuantumEff);
-  
-  
-  copperMat = G4Material::GetMaterial("G4_Cu");
-  copperMat->SetMaterialPropertiesTable(TPBTTXMPT);
+
+  //Set the material properties for the TPB on TTX material
+  TPBonTTX->SetMaterialPropertiesTable(TPBTTXMPT);
   
   const G4int nEntries = 9;
 G4double PhotonEnergy[nEntries] = { 1.6*eV, 6.7*eV, 6.8*eV, 6.9*eV,
@@ -2098,8 +2208,8 @@ MPTFiber->AddProperty("RINDEX",PhotonEnergy,RIndexFiber,nEntries);
 MPTFiber->AddProperty("WLSABSLENGTH",PhotonEnergy,AbsFiber,nEntries);
 MPTFiber->AddProperty("WLSCOMPONENT",PhotonEnergy,EmissionFiber,nEntries);
 MPTFiber->AddConstProperty("WLSTIMECONSTANT", 0.5*ns);
-//copperMat->SetMaterialPropertiesTable(MPTFiber);
-  
+
+
   //For the steel, let Geant4 calculate the reflectivity automatically using the real and imaginary refractive indices
 
   const static int SSEntries = 28;
@@ -2124,6 +2234,13 @@ MPTFiber->AddConstProperty("WLSTIMECONSTANT", 0.5*ns);
   SSMPT->AddProperty("ABSLENGTH",      SSEnergyArray,SSAbsArray,SSEntries);
   steelMat = G4Material::GetMaterial("G4_STAINLESS-STEEL");
   steelMat->SetMaterialPropertiesTable(SSMPT);
+
+
+//The PMMA optical properties shouldn't be important, so I'll just set it to have the same properties as the steel
+//If the PMMA optical properties are actually being used, something's wrong, or testing is in progress
+
+//PMMA->SetMaterialPropertiesTable(SSMPT);
+
 
   
   //For the Tetratex, according to Luigi's notes, the reflectivity might be a bit off due to the TPB coating
@@ -2214,7 +2331,9 @@ double WLGDDetectorConstruction::LArEpsilon(double lambda)
   //The values are approximately the same
   G4double epsilon;
   if (lambda < 110*nanometer) return 1.0e4; // lambda MUST be > 110.0 nm
-  epsilon = lambda / micrometer; // switch to micrometers
+  //epsilon = lambda / micrometer; // switch to micrometers
+  epsilon = lambda * 1000; // switch to micrometers
+  //G4cout << "epsilon: " << epsilon << G4endl;
   epsilon = 1.0 / (epsilon * epsilon); // 1 / (lambda)^2
   epsilon = 1.2055e-2 * ( 0.2075 / (91.012 - epsilon) +
                           0.0415 / (87.892 - epsilon) +
@@ -2233,6 +2352,8 @@ double WLGDDetectorConstruction::LArEpsilon(double lambda)
 
 double WLGDDetectorConstruction::LArRefIndex(double LambdaE)
 {
+  double grent = sqrt(LArEpsilon(LambdaE));
+  G4cout << "LAr ref ind: " << grent << G4endl;
   return sqrt(LArEpsilon(LambdaE)); // square root of dielectric constant
 }//LarRefIndex
 
@@ -2274,15 +2395,37 @@ double WLGDDetectorConstruction::LArAbsLength(double LambdaE)
   //Could possibly implement a more realistic value based on L200 measurements
   //For L1000, situation is more complicated - two types of LAr (atm and UG)
 
+  //January 2024 update: the step function is no longer good enough
+  //However, we've released a paper that with sufficient Xe doping,
+  //i.e. moving the scintillation peak from 128 to 178 nm,
+  //we can increase the attenuation length from 60 cm to >6 m
+  //https://arxiv.org/pdf/2112.07427.pdf
+  //Being conservative, we can write a function which hits 60 cm attenuation
+  //at 128 nm and 4 m attenuation by 178 nm, and becomes effectively transparent
+  //above, let's say 200 nm
+  //The shape of this function is also somewhat of a mystery, but a soft
+  //exponential feels right. The value increases so rapidly - but not in the
+  //128 nm region, where we begin. Let's try an exponential that hits our target
+  //parameters.
+
+  //G4cout <<"LarAbsLength input: " << LambdaE/nm << G4endl;
+
   G4double LArAbsL = 0;
   G4double LArAbsVUV = 60*cm;
   G4double LArAbsVis = 1000*m;
 
 
-  if ((LambdaE/nm) < 200.0)
-    LArAbsL = LArAbsVUV;
-  else
+  if ((LambdaE/nm) > 200.0)
     LArAbsL = LArAbsVis;
+  else if((LambdaE/nm) > 100.0)
+    LArAbsL = (exp(.0281841*(LambdaE/nm)-3.51284) - 0.49936)*m;
+  //This function hit 60 cm absorption at 128 nm,
+  //                   4 m  absorption at 178 nm,
+  //and has an absorption value of 7.865 m at 200 nm
+  //It is invalid for wavelengths below 100 nm, which
+  //shouldn't ever be a thing which is simulated anyways
+
+  //G4cout << "LArAbsL: " << LArAbsL << G4endl;
 
   return LArAbsL;
 
@@ -2294,14 +2437,26 @@ double WLGDDetectorConstruction::LArScintSpec(double LambdaES)
 {
 
   G4double waveL;
-  //Previously, the 5.858 was 2.929, but the spectrum was too sharply peaked compared to literature
   //See for example https://cds.cern.ch/record/2713386?ln=en
-  waveL =exp(-0.5*((LambdaES*1000000-128.0)/(5.858))*((LambdaES*1000000-128.0)/(5.858)));
+  //Not sure why we have to multiply by 10^6 - probably dropped a CLHEP label somewhere
+  //Damn things are more trouble than they're worth sometimes
+  waveL = exp(-0.5*((LambdaES*1000000-128.0)/(2.929))*((LambdaES*1000000-128.0)/(2.929)));
   //G4cout << waveL << G4endl << LambdaES << G4endl << G4endl;
   return waveL;
 
 }//LarScintSpec
 
+double WLGDDetectorConstruction::LArXeScintSpec(double LambdaES)
+{
+  //https://www.sciencedirect.com/science/article/pii/S0927650505000964
+  //Peak at 178 nm, st.dev of 5.945
+  G4double waveL;
+  
+  waveL = exp(-0.5*((LambdaES*1000000-178.0)/(5.945))*((LambdaES*1000000-178.0)/(5.945)));
+  //G4cout << waveL << G4endl << LambdaES << G4endl << G4endl;
+  return waveL;
+  
+}
 
 void WLGDDetectorConstruction::SetPositionOfDetectors(G4String name)
 {

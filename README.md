@@ -215,6 +215,8 @@ Macros to control the detector geometry
 - UseWLSCoating       (1 for on, 0 for off)
 - WLSCoatingMaterial  (default is TPB)
 
+If XeConc > 0, the LAr optical properties will automatically change to the properties of LAr doped with 100 ppm xenon. Currently, this is the only xenon doping concentration implemented.
+
 For the number of light guides and light guide spacing, the user can choose to set both. However, if only one is provided, a reasonable value for the other will be calculated based on the shield height.
 
 

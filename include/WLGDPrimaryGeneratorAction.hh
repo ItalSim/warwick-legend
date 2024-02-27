@@ -112,7 +112,7 @@ public:
   void OpenMUSUNDirectory(G4String pathtodata);
   void shortcutToChangeFileName(const G4String& newFile);
   void ResetCapture(void);
-  void AddGamma(G4double X, G4double Y, G4double Z, G4double E, G4Event* event);
+  void AddGamma(G4double T, G4double X, G4double Y, G4double Z, G4double E, G4Event* event);
   G4ThreeVector RandomMomentum(void);
   void OpenArFile();
   
@@ -134,6 +134,8 @@ private:
   G4String           ArFileName = "";
   std::ifstream      ArFile;
   std::string        line;
+  
+  G4double           ArGammaT = 0;
   G4double           ArGammaX = 0;
   G4double           ArGammaY = 0;
   G4double           ArGammaZ = 0;

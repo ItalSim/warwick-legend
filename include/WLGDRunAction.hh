@@ -109,6 +109,8 @@ private:
   void                  SetWriteOutOpticalData(G4int answer);
   void                  SetWriteOutOpticalMapData(G4int answer);
   void                  SetWriteOutStepData(G4int answer);
+
+  double                runtimer;//Just for checking how long jobs take to process
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

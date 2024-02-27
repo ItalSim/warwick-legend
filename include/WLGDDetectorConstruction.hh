@@ -91,6 +91,7 @@ public:
   double LArRayLength(double LambdaE, double temperature);
   double LArAbsLength(double LambdaE);
   double LArScintSpec(double LambdaES);
+  double LArXeScintSpec(double LambdaES);
   double LArEpsilon(double lambda);
   
   void SetOpticalOption(G4bool opop);
@@ -212,7 +213,7 @@ private:
   G4Material*             steelMat;
   G4Material*             airMat;
   G4Material*             worldMaterial;
-  G4Material*             larMat_alt;
+  G4Material*             steelMat_WLSR;
   G4Material*             waterMat;
   G4Material*             lightguidemat;
   G4Material*             claddingmat;
@@ -225,11 +226,14 @@ private:
   G4Material*             polystyrene;
   G4Material*             tetratex;
   G4Material*             silicon;
+  G4Material*             TPBonTTX;
 
   //All of the G4solids, logical and physical volumes should be moved here
   //However, that's hours of very boring work
   G4VPhysicalVolume*      fOuterLArPhysical;
   G4VPhysicalVolume*      fCopperPhysical;
+  G4VPhysicalVolume*      cryoWLSRPhysical;
+  G4VPhysicalVolume*      fCopperWLSRPhysical;
 };
 
 #endif
