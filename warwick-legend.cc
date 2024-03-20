@@ -27,6 +27,7 @@
 #include "G4Threading.hh"
 #include "G4UImanager.hh"
 #include "G4RadioactiveDecayPhysics.hh"
+#include "G4OpticalPhysics.hh"
 #include "QGSP_BIC_HP.hh"
 #include "Shielding.hh"
 #include "QGSP_BIC.hh"
@@ -104,7 +105,8 @@ int main(int argc, char** argv)
 
     // -- set user physics list
     auto* physicsList = new Shielding;//new  QGSP_BERT_HP;//new Shielding;
-
+    G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
+    physicsList->RegisterPhysics(opticalPhysics);
     // allow for thermal neutrons to find Ge
     auto* neutronCut  = new G4NeutronTrackingCut(1);
     neutronCut->SetTimeLimit(2.0 * CLHEP::ms);  // 2 milli sec limit
@@ -159,6 +161,7 @@ int main(int argc, char** argv)
     // finish physics list
     runManager->SetUserInitialization(physicsList);
 
+    
     // -- Set user action initialization class, forward random seed
     auto* actions = new WLGDActionInitialization(detector, outputFileName);
     runManager->SetUserInitialization(actions);
@@ -176,6 +179,16 @@ int main(int argc, char** argv)
     //
     G4UImanager* UImanager = G4UImanager::GetUIpointer();
 
+    // if(ui != nullptr)  // Define UI session for interactive mode
+    // {
+    //     auto visManager = std::make_unique<G4VisExecutive>();
+    //     visManager->Initialize();
+
+    //     UImanager->ApplyCommand("/control/execute vis.mac");
+    //     ui->SessionStart();
+    //     // UI must be deleted *before* the vis manager
+    //     delete ui;
+    // }
     if(ui != nullptr)  // Define UI session for interactive mode
     {
         auto visManager = std::make_unique<G4VisExecutive>();

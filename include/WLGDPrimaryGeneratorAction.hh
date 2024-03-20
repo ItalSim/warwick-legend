@@ -106,12 +106,15 @@ public:
   void SetZShift(G4double fZShift);
 
   void ChangeFileName(G4String newFile);
-  void OpenFile();
+  void OpenFile(void);
   bool fUsingMUSUNDirectory;
-  void OpenMUSUNFile();
+  void OpenMUSUNFile(void);
   void OpenMUSUNDirectory(G4String pathtodata);
   void shortcutToChangeFileName(const G4String& newFile);
-
+  void ResetCapture(void);
+  void AddGamma(G4double T, G4double X, G4double Y, G4double Z, G4double E, G4Event* event);
+  G4ThreeVector RandomMomentum(void);
+  void OpenArFile();
   
 private:
   void DefineCommands();
@@ -128,6 +131,15 @@ private:
   std::ifstream      fInputFile;
   G4String           fFileName;
   G4double           fZShift;
+  G4String           ArFileName = "";
+  std::ifstream      ArFile;
+  std::string        line;
+  
+  G4double           ArGammaT = 0;
+  G4double           ArGammaX = 0;
+  G4double           ArGammaY = 0;
+  G4double           ArGammaZ = 0;
+  G4double           ArGammaE = 0;
 
   std::vector<G4String> ListOfMUSUNFiles;
   

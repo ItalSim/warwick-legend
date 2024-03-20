@@ -22,15 +22,16 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
 
   // Create directories
   analysisManager->SetVerboseLevel(1);
-  analysisManager->SetNtupleMerging(false);
+  analysisManager->SetNtupleMerging(true);
+  //Warning: SetNtupleMerging can cause issues with outputs that are not thread-safe!
 
   // -- write out some branches only if the information is also stored
 
 
   // Creating ntuple with vector entries
   //
-  analysisManager->CreateNtuple("Score", "Hits");
-  analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
+  analysisManager->CreateNtuple("Score", "Hits");//Index=0
+  /*analysisManager->CreateNtupleIColumn("NGe77", fEventAction->GetNGe77());
   analysisManager->CreateNtupleIColumn("HitID", fEventAction->GetHitTID());
   analysisManager->CreateNtupleDColumn("Edep", fEventAction->GetHitEdep());
   analysisManager->CreateNtupleDColumn("Time", fEventAction->GetHitTime());
@@ -63,7 +64,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleIColumn("MunoVeto", fEventAction->GetMuonVeto_flag());
   analysisManager->CreateNtupleIColumn("isIC", fEventAction->GetisIC());
   analysisManager->CreateNtupleIColumn("isMetastable", fEventAction->GetisMetastable());
-
+  */
   analysisManager->CreateNtupleDColumn("Neutronxloc", fEventAction->GetNeutronxLoc());
   analysisManager->CreateNtupleDColumn("Neutronyloc", fEventAction->GetNeutronyLoc());
   analysisManager->CreateNtupleDColumn("Neutronzloc", fEventAction->GetNeutronzLoc());
@@ -79,14 +80,14 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
                                        fEventAction->GetNumberOfNeutronsInEvent());
   analysisManager->CreateNtupleDColumn("NeutronsMostOuterRadius",
                                        fEventAction->GetNeutronsMostOuterRadius());
+
+    //analysisManager->CreateNtupleDColumn("Neutronxtrack",
+    //fEventAction->GetNeutronxTrack());
+    //analysisManager->CreateNtupleDColumn("Neutronytrack",
+    //fEventAction->GetNeutronyTrack());
+    //analysisManager->CreateNtupleDColumn("Neutronztrack",
+    //fEventAction->GetNeutronzTrack());
   /*
-    analysisManager->CreateNtupleDColumn("Neutronxtrack",
-    fEventAction->GetNeutronxTrack());
-    analysisManager->CreateNtupleDColumn("Neutronytrack",
-    fEventAction->GetNeutronyTrack());
-    analysisManager->CreateNtupleDColumn("Neutronztrack",
-    fEventAction->GetNeutronzTrack());
-  */
   analysisManager->CreateNtupleDColumn("LArEnergyDeposition",
                                        fEventAction->GetLArEnergyDeposition());
   analysisManager->CreateNtupleDColumn("GeEnergyDeposition",
@@ -234,7 +235,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
                                          fEventAction->GetGdSiblings_type());
     analysisManager->CreateNtupleIColumn("GdSiblings_whichVolume",
                                          fEventAction->GetGdSiblings_whichVolume());
-  }
+  }*/
 
   // analysisManager->CreateNtupleDColumn("nCAr_timing", fEventAction->GetnCAr_timing());
   // analysisManager->CreateNtupleDColumn("nCAr_x", fEventAction->GetnCAr_x());
@@ -269,7 +270,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleIColumn("prod_parentType", fEventAction->Getprod_parentType());//prod_parentType
 
 
-  if(fIndividualGeDepositionInfo)
+  /*  if(fIndividualGeDepositionInfo)
   {
     analysisManager->CreateNtupleDColumn("Ge77mGammaEmission_timing",
                                          fEventAction->GetGe77mGammaEmission_timing());
@@ -306,14 +307,79 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleDColumn("Muon_WLSR_intersect_y", fEventAction->Get_Muon_WLSR_intersect_y());
   analysisManager->CreateNtupleDColumn("Muon_WLSR_intersect_z", fEventAction->Get_Muon_WLSR_intersect_z());
   analysisManager->CreateNtupleDColumn("Muon_WLSR_Edep", fEventAction->Get_Muon_WLSR_Edep());
+  */
+  analysisManager->FinishNtuple();
+
+  //Even if they remain unused, we must create every ntuple
+  //This is because, when using the analysis manager with multiple ntuples, the index of the ntuple is used when filling with data
+  //So, if we don't create the ntuple which normally has index=1, the next ntuple (which should be index=2) will have index=1
+
+  analysisManager->CreateNtuple("Steps","Step-level data");//Index=1
+  
+      analysisManager->CreateNtupleDColumn("X");             //0
+      analysisManager->CreateNtupleDColumn("Y");             //1
+      analysisManager->CreateNtupleDColumn("Z");             //2
+      analysisManager->CreateNtupleDColumn("Time");          //3
+      analysisManager->CreateNtupleDColumn("KineticEnergy"); //4
+      analysisManager->CreateNtupleIColumn("TrackID");       //5
+      analysisManager->CreateNtupleIColumn("ID");            //6
+      analysisManager->CreateNtupleIColumn("EventID");       //7
+      analysisManager->CreateNtupleIColumn("PID");           //8
+      analysisManager->CreateNtupleSColumn("Process");       //9
+      analysisManager->CreateNtupleSColumn("CreatorProcess");//10
+      analysisManager->CreateNtupleSColumn("Material");      //11
+      analysisManager->CreateNtupleSColumn("Volume");        //12
+      analysisManager->CreateNtupleDColumn("EDep");          //13
+  
+      //analysisManager->CreateNtupleDColumn("X");             //0
+      //analysisManager->CreateNtupleDColumn("Y");             //1
+      //analysisManager->CreateNtupleDColumn("Z");             //2
+      //analysisManager->CreateNtupleDColumn("Time");          //3
+      //analysisManager->CreateNtupleIColumn("EventID");       //4
+      //analysisManager->CreateNtupleDColumn("EDep");          //5
 
   analysisManager->FinishNtuple();
+
+  
+  analysisManager->CreateNtuple("OpticsTracks","Track-level optical photon data"); //Index=2
+  
+  analysisManager->CreateNtupleDColumn("X");             //0
+  analysisManager->CreateNtupleDColumn("Y");             //1
+  analysisManager->CreateNtupleDColumn("Z");             //2
+  analysisManager->CreateNtupleDColumn("Time");          //3
+  analysisManager->CreateNtupleDColumn("KineticEnergy"); //4
+  analysisManager->CreateNtupleDColumn("Wavelength");    //5
+  analysisManager->CreateNtupleIColumn("TrackID");       //6
+  analysisManager->CreateNtupleIColumn("EventID");       //7
+  analysisManager->CreateNtupleSColumn("CreatorProcess");//8
+  analysisManager->CreateNtupleSColumn("Volume");        //9
+  analysisManager->CreateNtupleDColumn("px");             //10
+  analysisManager->CreateNtupleDColumn("py");             //11
+  analysisManager->CreateNtupleDColumn("pz");             //12
+  
+  
+  analysisManager->FinishNtuple();
+
+  analysisManager->CreateNtuple("OpticalMapData","Data for creating the WLGD optical map");//Index=3
+  
+  analysisManager->CreateNtupleFColumn("X1");             //0
+  analysisManager->CreateNtupleFColumn("Y1");             //1
+  analysisManager->CreateNtupleFColumn("Z1");             //2
+  analysisManager->CreateNtupleFColumn("X2");             //3
+  analysisManager->CreateNtupleFColumn("Y2");             //4
+  analysisManager->CreateNtupleFColumn("Z2");             //5
+  
+  analysisManager->FinishNtuple();
+
 }
 
 WLGDRunAction::~WLGDRunAction() { delete G4AnalysisManager::Instance(); }
 
 void WLGDRunAction::BeginOfRunAction(const G4Run* /*run*/)
 {
+  //Start the clock
+  runtimer = double(clock());
+  
   // Get analysis manager
   auto analysisManager = G4AnalysisManager::Instance();
   // Open an output file
@@ -376,6 +442,8 @@ void WLGDRunAction::EndOfRunAction(const G4Run* /*run*/)
     }
     outputStream_2.close();
   }
+  runtimer = double(clock()) - runtimer;
+  G4cout << G4endl << "Total processing time: " << runtimer/1000000 << " seconds." << G4endl << G4endl;
 }
 
 void WLGDRunAction::SetWriteOutNeutronProductionInfo(G4int answer)
@@ -417,6 +485,27 @@ void WLGDRunAction::SetNeutronCaptureSiblings(G4int answer)
 {
   fNeutronCaptureSiblings = answer;
 }
+
+void WLGDRunAction::SetWriteOutOpticalData(G4int answer)
+{
+  fWriteOutOpticalData = answer;
+}
+
+void WLGDRunAction::SetWriteOutOpticalMapData(G4int answer)
+{
+  fWriteOutOpticalMapData = answer;
+}
+
+void WLGDRunAction::SetReduceStepsData(G4int answer)
+{
+  fReducedStepsData = answer;
+}
+
+void WLGDRunAction::SetWriteOutStepData(G4int answer)
+{
+  fWriteOutStepData = answer;
+}
+
 
 void WLGDRunAction::DefineCommands()
 {
@@ -500,6 +589,40 @@ void WLGDRunAction::DefineCommands()
     .SetCandidates("0 1")
     .SetDefaultValue("0");
 
+  fMessenger
+    ->DeclareMethod("WriteOpticalProductionData",
+                    &WLGDRunAction::SetWriteOutOpticalData)
+    .SetGuidance("Set whether to write out optical photon data at their time of production")
+    .SetGuidance("0 = do not output this data")
+    .SetGuidance("1 = output this data")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
 
-    //fReadMuonCrossingWLSR
+  fMessenger
+    ->DeclareMethod("WriteOpticalMapData",
+                    &WLGDRunAction::SetWriteOutOpticalMapData)
+    .SetGuidance("Set whether to write out optical map data (advanced option; read the source code for more info)")
+    .SetGuidance("0 = do not output this data")
+    .SetGuidance("1 = output this data")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+
+  fMessenger
+    ->DeclareMethod("ReduceStepData",
+                    &WLGDRunAction::SetReduceStepsData)
+    .SetGuidance("Set whether to reduce data stored in the Steps tree (intended for optical studies)")
+    .SetGuidance("0 = keep all info in the Steps tree")
+    .SetGuidance("1 = only keep x,y,z,t,edep,event#")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+
+  fMessenger
+    ->DeclareMethod("WriteStepData",
+                    &WLGDRunAction::SetWriteOutStepData)
+    .SetGuidance("Set whether to write out step-level data within the cryostat (set cuts in WLGDSteppingAction.cc)")
+    .SetGuidance("0 = do not output this data")
+    .SetGuidance("1 = output this data")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+
 }

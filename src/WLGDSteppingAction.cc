@@ -12,6 +12,15 @@ using namespace std;
 #include "G4SystemOfUnits.hh"
 
 #include "G4RunManager.hh"
+#include "G4EventManager.hh"
+#include "WLGDEventAction.hh"
+#include "g4root.hh"
+
+#include "G4Run.hh"
+#include "G4UnitsTable.hh"
+#include <fstream>
+#include <iostream>
+
 
 WLGDSteppingAction::WLGDSteppingAction(WLGDEventAction* event, WLGDRunAction* run,
                                        WLGDDetectorConstruction* det)
@@ -25,6 +34,137 @@ WLGDSteppingAction::WLGDSteppingAction(WLGDEventAction* event, WLGDRunAction* ru
 
 void WLGDSteppingAction::UserSteppingAction(const G4Step* aStep)
 {
+ 
+  if(fRunAction->getWriteOutStepData())
+    {//If the user wants step-level output
+      //Fill the ntuple variables first
+      if(aStep->GetPostStepPoint()->GetMaterial())//If the particle isn't exiting the world volume
+	{
+	  X    = aStep->GetPostStepPoint()->GetPosition().x()/CLHEP::mm;	  
+	  Y    = aStep->GetPostStepPoint()->GetPosition().y()/CLHEP::mm;
+	  Z    = aStep->GetPostStepPoint()->GetPosition().z()/CLHEP::mm;
+	  Time = aStep->GetPostStepPoint()->GetGlobalTime()/CLHEP::s;
+	  KineticEnergy = aStep->GetPostStepPoint()->GetKineticEnergy()/CLHEP::keV;
+	  EDep          = aStep->GetTotalEnergyDeposit()/CLHEP::keV;
+	  EventID       = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
+	  TrackID       = aStep->GetTrack()->GetTrackID();
+	  StepID        = aStep->GetTrack()->GetCurrentStepNumber();
+	  PID           = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();
+
+	  if(aStep->GetPostStepPoint()->GetProcessDefinedStep())
+	    Process       = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName();
+	  else
+	    Process = "Error";
+	  if(aStep->GetTrack()->GetCreatorProcess())
+	    CreatorProcess = aStep->GetTrack()->GetCreatorProcess()->GetProcessName();
+	  else
+	  CreatorProcess = "Primary";
+	  if(aStep->GetPostStepPoint()->GetMaterial())
+	    Material      = aStep->GetPostStepPoint()->GetMaterial()->GetName();
+	  else
+	    Material = "Error";
+	  if(aStep->GetPostStepPoint()->GetPhysicalVolume())
+	    Volume        = aStep->GetPostStepPoint()->GetPhysicalVolume()->GetName();
+	  else
+	  Volume = "Error";
+
+	  //Cuts go here
+	  //A cut to save all steps within the cryostat is the default
+	  if(Material!="G4_WATER"&&Material!="StdRock"&&Material!="GdLoadedWater")
+	  {
+	    //G4cout << X << " "  << Y << " "  << Z << " "  << Process << " "  << CreatorProcess << " "  << Material << " "  << Volume << G4endl;  	  
+	      //G4cout << "X: " << aStep->GetTrack()->GetVertexPosition().getX() << "Y: " << aStep->GetTrack()->GetVertexPosition().getY()<< "Z: " << aStep->GetTrack()->GetVertexPosition().getZ() << G4endl;
+
+	    //A more complicated cut to record neutron captures on 76Ge or 40Ar
+	 /*if(Process=="biasWrapper(nCapture)")
+	  {
+
+	  for(int i = 0; i < aStep->GetSecondaryInCurrentStep()->size(); i++)
+	  {
+		if((aStep->GetSecondaryInCurrentStep()->at(i)->GetParticleDefinition()->GetAtomicMass() == 77 &&
+		    aStep->GetSecondaryInCurrentStep()->at(i)->GetParticleDefinition()->GetPDGCharge()  == 32)||
+		   (aStep->GetSecondaryInCurrentStep()->at(i)->GetParticleDefinition()->GetAtomicMass() == 41 &&
+		    aStep->GetSecondaryInCurrentStep()->at(i)->GetParticleDefinition()->GetPDGCharge()  == 18))
+		  {
+		    //As part of a more complicated filling of the muon-induced neutron capture info,
+		    //the PID parameter needs to be filled from the nucleus undergoing capture
+		    PID = aStep->GetSecondaryInCurrentStep()->at(i)->GetDefinition()->GetPDGEncoding();
+		    //And the neutron's kinetic energy is artificially set to 0 at the time of capture, so
+		    KineticEnergy = aStep->GetPreStepPoint()->GetKineticEnergy()/CLHEP::keV;		      
+	*/	    
+		    
+	  //Fill the ntuple itself
+	  auto *am = G4AnalysisManager::Instance();
+
+	  if(fRunAction->getReduceStepsData() == 0)
+	    {
+	      am->FillNtupleDColumn(1,0,X);
+	      am->FillNtupleDColumn(1,1,Y);
+	      am->FillNtupleDColumn(1,2,Z);
+	      am->FillNtupleDColumn(1,3,Time);
+	      am->FillNtupleDColumn(1,4,KineticEnergy);
+	      am->FillNtupleIColumn(1,5,TrackID);
+	      am->FillNtupleIColumn(1,6,StepID);
+	      am->FillNtupleIColumn(1,7,EventID);
+	      am->FillNtupleIColumn(1,8,PID);
+	      am->FillNtupleSColumn(1,9,Process);
+	      am->FillNtupleSColumn(1,10,CreatorProcess);
+	      am->FillNtupleSColumn(1,11,Material);
+	      am->FillNtupleSColumn(1,12,Volume);
+	      am->FillNtupleDColumn(1,13,EDep);
+	    }	  
+	  else
+	    {
+	      am->FillNtupleDColumn(1,0,X);
+	      am->FillNtupleDColumn(1,1,Y);
+	      am->FillNtupleDColumn(1,2,Z);
+	      am->FillNtupleDColumn(1,3,Time);
+	      am->FillNtupleIColumn(1,7,EventID);
+	      am->FillNtupleDColumn(1,13,EDep);
+	    }
+	  
+	  am->AddNtupleRow(1);
+	  
+	  //}//Nuclear ID cut
+	  //}//Secondaries
+	  }//cut
+	  
+	}//If particle isn't exiting the world volume (safety)
+    }//If user wants step level output
+  
+  if(fRunAction->getWriteOutOpticalMapData())
+    {
+  //Fill optical map data
+  if(aStep->GetTrack()->GetDefinition()->GetPDGEncoding()==-22&&aStep->GetPostStepPoint()->GetMaterial()->GetName()=="PMMA")
+    {
+      //if(aStep->GetPreStepPoint()->GetMaterial()->GetName()!="G4_lAr")//Debug
+      //G4cout << aStep->GetPreStepPoint()->GetMaterial()->GetName() << G4endl;
+      //X1    = aStep->GetTrack()->GetVertexPosition().x()/CLHEP::mm;
+      //Y1    = aStep->GetTrack()->GetVertexPosition().y()/CLHEP::mm;
+      //Z1    = aStep->GetTrack()->GetVertexPosition().z()/CLHEP::mm;
+      //Feb 2024 update: since WLS has been added, it's possible for non-primary photons to be generated
+      //We don't care about the origins of the WLS photons, we want the starting photon's location
+      X1    = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetPrimaryVertex()->GetX0()/CLHEP::mm;
+      Y1    = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetPrimaryVertex()->GetY0()/CLHEP::mm;
+      Z1    = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetPrimaryVertex()->GetZ0()/CLHEP::mm;
+      X2    = aStep->GetPostStepPoint()->GetPosition().x()/CLHEP::mm;
+      Y2    = aStep->GetPostStepPoint()->GetPosition().y()/CLHEP::mm;
+      Z2    = aStep->GetPostStepPoint()->GetPosition().z()/CLHEP::mm;
+      
+      auto *am = G4AnalysisManager::Instance();
+      am->FillNtupleFColumn(3,0,X1);
+      am->FillNtupleFColumn(3,1,Y1);
+      am->FillNtupleFColumn(3,2,Z1);
+      am->FillNtupleFColumn(3,3,X2);
+      am->FillNtupleFColumn(3,4,Y2);
+      am->FillNtupleFColumn(3,5,Z2);
+      am->AddNtupleRow(3);
+      aStep->GetTrack()->SetTrackStatus(fKillTrackAndSecondaries);
+      }
+    }//Fill optical map data
+
+  
+  
 #define MostOuterRadiusTracking 0
   // Edit: 2021/03/05 by Moritz Neuberger
   // Adding tracking of amount of neutrons crossing the detectors

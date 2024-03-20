@@ -70,6 +70,8 @@ public:
   void  SetTurbineAndTubeHeight(G4double height);
   void  SetTurbineAndTubezPosition(G4double zPosition);
   void  SetTurbineAndTubeNPanels(G4double nPanels);
+  void  SetPolygonShieldNSides(G4int sides);
+
 
   // - set the concentration of Xe and He3 in the LAr
   void  SetXeConc(G4double nf);
@@ -83,6 +85,27 @@ public:
   // - adjust between original simulation position of detectors or updates ones
   void  SetPositionOfDetectors(G4String name);
 
+  //Optical
+  void SetupOpticalProperties(void);
+  double LArRefIndex(double LambdaE);
+  double LArRayLength(double LambdaE, double temperature);
+  double LArAbsLength(double LambdaE);
+  double LArScintSpec(double LambdaES);
+  double LArXeScintSpec(double LambdaES);
+  double LArEpsilon(double lambda);
+  
+  void SetOpticalOption(G4bool opop);
+  void SetNCladdingLayers(G4int nlayers);
+  void SetCladdingMaterial(G4String cladmat);
+  void SetCladdingThickness(G4double cladthick);
+  void SetLightGuideLength(G4double lglength);
+  void SetLightGuideWidth(G4double lgwidth);
+  void SetLightGuideMaterial(G4String lgmat);
+  void SetLightGuideSpacing(G4double lgspacing);
+  void SetLightGuideNPerWall(G4int lgnperwall);
+  void UseWLSCoating(G4bool WLSon);
+  void SetWLSCoatingMaterial(G4String WLSmatname);
+  
 private:
   void DefineCommands();
   void DefineMaterials();
@@ -94,6 +117,8 @@ private:
   G4GenericMessenger*     fDetectorMessenger       = nullptr;
   G4GenericMessenger*     fBiasMessenger           = nullptr;
   G4GenericMessenger*     fMaterialMessenger       = nullptr;
+  G4GenericMessenger*     fOpticsMessenger         = nullptr;
+
   G4double                fvertexZ                 = -1.0;
   G4double                fmaxrad                  = -1.0;
   G4String                fGeometryName            = "baseline";
@@ -110,19 +135,105 @@ private:
   G4double                fBoratedTurbineLength    = 50.0;
   G4double                fBoratedTurbineAngle     = 45.0;
   G4double                fBoratedTurbineWidth     = 5.0;
+  G4int                   shieldnsides             = 12;
   G4double                fBoratedTurbineHeight    = 600.;
   G4double                fBoratedTurbinezPosition = 0.;
-  G4int                   fNPanels;
-  G4int                   fBoratedTurbineNPanels = 0;
-  G4int                   fWithOutCupperTubes    = 0;
-  G4int                   fWithBoratedPET        = 0;
-  G4String                fSetMaterial           = "";
-  G4int                   fWithGdWater           = 0;
-  G4int                   fWithWoWater           = 0;
-  G4int                   fMaGeMaterial          = 0;
+  G4int                   fNPanels                 = 12;;
+  G4int                   fBoratedTurbineNPanels   = 0;
+  G4int                   fWithOutCupperTubes      = 0;
+  G4int                   fWithBoratedPET          = 0;
+  G4String                fSetMaterial             = "";
+  G4int                   fWithGdWater             = 0;
+  G4int                   fWithWoWater             = 0;
+  G4int                   fMaGeMaterial            = 0;
+
+  G4bool                  fOpticalOption           = false;
+  G4int                   fNCladdingLayers         = 1;
+  G4String                fCladdingMaterial        = "";
+  G4double                fCladdingThickness       = 100;//in um
+  G4double                fLightGuideLength        = 100.;
+  G4double                fLightGuideWidth         = 3.0;
+  G4String                fLightGuideMaterial      = "";
+  G4double                fLightGuideSpacing       = 0;//Default 30 cm
+  G4int                   fLightGuideNPerWall      = 0;//Default 12
+  G4bool                  fWLSOption               = false;
+  G4String                fWLSMaterial             = "TPB";
+  
+  
+  G4Element*              H;
+  G4Element*              C;
+  G4Element*              N;
+  G4Element*              O;
+  G4Element*              F;
+  G4Element*              Si;
+  G4Element*              elS;
+  G4Element*              Mg;
+  G4Element*              Ca;
+  G4Element*              elGd;
+  G4Element*              SpecialB;
+  G4Element*              eGe;
+  G4Element*              elXe;
+  G4Element*              eHe3;
+  G4Element*              larEl;
+
+  G4Isotope*              B10;
+  G4Isotope*              B11;
+  G4Isotope*              Ge_70;
+  G4Isotope*              Ge_72;
+  G4Isotope*              Ge_73;
+  G4Isotope*              Ge_74;
+  G4Isotope*              Ge_76;
+  G4Isotope*              iHe3;
+  
+  G4Material*             stdRock;
+  G4Material*             puMat;
+  G4Material*             BoratedPET;
+  G4Material*             BoratedPETMat;
+  G4Material*             PMMA;
+  G4Material*             PMMA1percentB;
+  G4Material*             PMMA3percentB;
+  G4Material*             PMMA5percentB;
+  G4Material*             PMMA7percentB;
+  G4Material*             PMMA10percentB;
+  G4Material*             PMMA1percentGd;
+  G4Material*             PMMA3percentGd;
+  G4Material*             PMMA5percentGd;
+  G4Material*             PMMA7percentGd;
+  G4Material*             PMMA10percentGd;
+  G4Material*             PolyGd;
+  G4Material*             PMMA038percentPolyGd;
+  G4Material*             PMMA191percentPolyGd;
+  G4Material*             PMMA381percentPolyGd;
+
+  G4Material*             PolyEthylene;
+  G4Material*             gadoliniumSulfate;
+  G4Material*             purewater;
+  G4Material*             roiMat;
+  G4Material*             copperMat;
+  G4Material*             steelMat;
+  G4Material*             airMat;
+  G4Material*             worldMaterial;
+  G4Material*             steelMat_WLSR;
+  G4Material*             waterMat;
+  G4Material*             lightguidemat;
+  G4Material*             claddingmat;
+  G4Material*             wlsmat;
   G4Material*             CombinedArXeHe3;
   G4Material*             water;
   G4Material*             larMat;
+  G4Material*             PEN;
+  G4Material*             TPB;
+  G4Material*             polystyrene;
+  G4Material*             tetratex;
+  G4Material*             silicon;
+  G4Material*             TPBonTTX;
+
+  //All of the G4solids, logical and physical volumes should be moved here
+  //However, that's hours of very boring work
+  G4VPhysicalVolume*      fOuterLArPhysical;
+  G4VPhysicalVolume*      fCopperPhysical;
+  G4VPhysicalVolume*      cryoWLSRPhysical;
+  G4VPhysicalVolume*      fCopperWLSRPhysical;
 };
 
 #endif
