@@ -63,8 +63,9 @@ public:
   G4int getReadMuonCrossingWLSR()          { return fReadMuonCrossingWLSR; }
   G4int getNeutronCaptureSiblings()        { return fNeutronCaptureSiblings; }
   G4int getWriteOutOpticalData()           { return fWriteOutOpticalData; }
-  G4int getWriteOutOpticalMapData()           { return fWriteOutOpticalMapData; }
+  G4int getWriteOutOpticalMapData()        { return fWriteOutOpticalMapData; }
   G4int getWriteOutStepData()              { return fWriteOutStepData; }
+  G4int getReduceStepsData()               { return fReducedStepsData; }
   
 
 private:
@@ -89,6 +90,7 @@ private:
   G4int                 fWriteOutStepData              = 0;
   G4int                 fWriteOutOpticalData           = 0;
   G4int                 fWriteOutOpticalMapData        = 0;
+  G4int                 fReducedStepsData              = 0;
   std::vector<G4int>    vector_eventNumber;
   std::vector<G4double> vector_x_dir;
   std::vector<G4double> vector_y_dir;
@@ -108,6 +110,7 @@ private:
   void                  SetNeutronCaptureSiblings(G4int answer);
   void                  SetWriteOutOpticalData(G4int answer);
   void                  SetWriteOutOpticalMapData(G4int answer);
+  void                  SetReduceStepsData(G4int answer);
   void                  SetWriteOutStepData(G4int answer);
 
   double                runtimer;//Just for checking how long jobs take to process

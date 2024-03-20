@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     //WLGDPrimaryGeneratorAction::ChangeFileName("./musun_gs_100M.dat");
     // command line interface
     CLI::App    app{ "Muon Simulation for Legend" };
-    int         nthreads = 1;//24;
+    int         nthreads = 1;
     std::string outputFileName("lg.root");
     std::string macroName;
 

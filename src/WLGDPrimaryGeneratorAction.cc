@@ -1,4 +1,4 @@
-// us
+// 
 #include "WLGDPrimaryGeneratorAction.hh"
 #include "WLGDDetectorConstruction.hh"
 
@@ -168,7 +168,8 @@ void WLGDPrimaryGeneratorAction::OpenArFile()
   if(fGenerator == "ArgonCaptureGammas"&&ArFileName == "")
     {//Open the input file, only once, only if it hasn't been opened yet
       G4cout << "OPEN AR FILE" << G4endl;
-      ArFileName = "/lfs/l1/legend/users/morella/legend1k_simulation/argon_energy_deposit/capture_data/output.txt";
+      //Old: ArFileName = "/lfs/l1/legend/users/morella/legend1k_simulation/argon_energy_deposit/capture_data/output.txt";
+      ArFileName = "/lfs/l1/legend/users/morella/legend1k_simulation/argon_energy_deposit/script/output_files/capture-gammas.txt";
       G4cout << ArFileName << G4endl;
       ArFile.open(ArFileName);
     }
@@ -195,6 +196,7 @@ void WLGDPrimaryGeneratorAction::ResetCapture(void)
   ArGammaY = 0;
   ArGammaZ = 0;
   ArGammaE = 0;
+  ArGammaT = 0;
 }
 
 
@@ -238,7 +240,7 @@ void WLGDPrimaryGeneratorAction::AddGamma(G4double T, G4double X, G4double Y, G4
   fParticleGun->SetParticleMomentumDirection(RandomMomentum());
   fParticleGun->SetParticleEnergy(E*keV);
   fParticleGun->SetParticlePosition(G4ThreeVector(X*m, Y*m, Z*m));
-  fParticleGun->SetParticleTime(T*ms);
+  fParticleGun->SetParticleTime(T*CLHEP::s);
   fParticleGun->GeneratePrimaryVertex(event);
   
 }

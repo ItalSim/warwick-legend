@@ -316,20 +316,28 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
 
   analysisManager->CreateNtuple("Steps","Step-level data");//Index=1
   
-  analysisManager->CreateNtupleDColumn("X");             //0
-  analysisManager->CreateNtupleDColumn("Y");             //1
-  analysisManager->CreateNtupleDColumn("Z");             //2
-  analysisManager->CreateNtupleDColumn("Time");          //3
-  analysisManager->CreateNtupleDColumn("KineticEnergy"); //4
-  analysisManager->CreateNtupleIColumn("TrackID");       //5
-  analysisManager->CreateNtupleIColumn("ID");            //6
-  analysisManager->CreateNtupleIColumn("EventID");       //7
-  analysisManager->CreateNtupleIColumn("PID");           //8
-  analysisManager->CreateNtupleSColumn("Process");       //9
-  analysisManager->CreateNtupleSColumn("CreatorProcess");//10
-  analysisManager->CreateNtupleSColumn("Material");      //11
-  analysisManager->CreateNtupleSColumn("Volume");        //12
-  analysisManager->CreateNtupleDColumn("EDep");          //13  
+      analysisManager->CreateNtupleDColumn("X");             //0
+      analysisManager->CreateNtupleDColumn("Y");             //1
+      analysisManager->CreateNtupleDColumn("Z");             //2
+      analysisManager->CreateNtupleDColumn("Time");          //3
+      analysisManager->CreateNtupleDColumn("KineticEnergy"); //4
+      analysisManager->CreateNtupleIColumn("TrackID");       //5
+      analysisManager->CreateNtupleIColumn("ID");            //6
+      analysisManager->CreateNtupleIColumn("EventID");       //7
+      analysisManager->CreateNtupleIColumn("PID");           //8
+      analysisManager->CreateNtupleSColumn("Process");       //9
+      analysisManager->CreateNtupleSColumn("CreatorProcess");//10
+      analysisManager->CreateNtupleSColumn("Material");      //11
+      analysisManager->CreateNtupleSColumn("Volume");        //12
+      analysisManager->CreateNtupleDColumn("EDep");          //13
+  
+      //analysisManager->CreateNtupleDColumn("X");             //0
+      //analysisManager->CreateNtupleDColumn("Y");             //1
+      //analysisManager->CreateNtupleDColumn("Z");             //2
+      //analysisManager->CreateNtupleDColumn("Time");          //3
+      //analysisManager->CreateNtupleIColumn("EventID");       //4
+      //analysisManager->CreateNtupleDColumn("EDep");          //5
+
   analysisManager->FinishNtuple();
 
   
@@ -488,6 +496,11 @@ void WLGDRunAction::SetWriteOutOpticalMapData(G4int answer)
   fWriteOutOpticalMapData = answer;
 }
 
+void WLGDRunAction::SetReduceStepsData(G4int answer)
+{
+  fReducedStepsData = answer;
+}
+
 void WLGDRunAction::SetWriteOutStepData(G4int answer)
 {
   fWriteOutStepData = answer;
@@ -591,6 +604,15 @@ void WLGDRunAction::DefineCommands()
     .SetGuidance("Set whether to write out optical map data (advanced option; read the source code for more info)")
     .SetGuidance("0 = do not output this data")
     .SetGuidance("1 = output this data")
+    .SetCandidates("0 1")
+    .SetDefaultValue("0");
+
+  fMessenger
+    ->DeclareMethod("ReduceStepData",
+                    &WLGDRunAction::SetReduceStepsData)
+    .SetGuidance("Set whether to reduce data stored in the Steps tree (intended for optical studies)")
+    .SetGuidance("0 = keep all info in the Steps tree")
+    .SetGuidance("1 = only keep x,y,z,t,edep,event#")
     .SetCandidates("0 1")
     .SetDefaultValue("0");
 
