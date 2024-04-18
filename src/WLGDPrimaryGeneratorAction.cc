@@ -197,6 +197,7 @@ void WLGDPrimaryGeneratorAction::ResetCapture(void)
   ArGammaZ = 0;
   ArGammaE = 0;
   ArGammaT = 0;
+  valuecounter = 1;
 }
 
 
@@ -938,44 +939,41 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
       double num;
       int numberofgammas   = 0;
       int numberofcaptures = 0;
-      int valuecounter     = 0;
 
-      ResetCapture();//Just in case
+      //ResetCapture();//Just in case
 
+      valuecounter = 0;
 
       while(iss >> num)//Line-by-line
 	{
-	  valuecounter++;
+	  if(!numberofcaptures)//Only need the numberofcaptures once
+	    numberofcaptures = num;
 	  //The order of numbers in the line is:
 
-	  //numberofcaptures  ArGammaT ArGammaX/Y/Z  numberofgammas  ArGammaE1/2/etc  ArGammaX/Y/Z...
-
-	  //This loop uses a trick where the value (or lack thereof) implicitly tracks the
-	  //position in the line. If a value is 0, it must be the next thing to be read.
+	  //numberofcaptures  ArGammaT ArGammaX/Y/Z  numberofgammas  ArGammaE1/2/etc  ArGammaT/X/Y/Z...
 
 	  //We use numberofgammas to determine when the current capture is
 	  //going to be done and then we begin fresh with the next capture
 	  switch (valuecounter)
 	    {
 	    case 1:
-	    numberofcaptures = num;
-	    break;
-	    case 2:
 	    ArGammaT = num;
 	    break;
-	    case 3:
+	    case 2:
 	    ArGammaX = num;
 	    break;
-	    case 4:
+	    case 3:
 	    ArGammaY = num;
 	    break;
-	    case 5:
+	    case 4:
 	    ArGammaZ = num;
 	    break;
-	    case 6:
+	    case 5:
 	    numberofgammas = num;
 	    break;
 	    }
+
+	  valuecounter++;
 
 	  //G4cout << numberofcaptures << "  " << ArGammaT << "  " << ArGammaX << "  " << ArGammaY << "  " << ArGammaZ << "  " << numberofgammas << "  " << ArGammaE << "  " << G4endl;
 	  
