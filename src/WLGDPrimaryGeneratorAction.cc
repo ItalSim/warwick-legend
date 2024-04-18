@@ -297,8 +297,8 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
       //G4double radius = (2.69 - 2.17408)*rndm(generator) + 2.17408;
       //Update 08/12/24: changing the radius definition and adjusting z value for an attempt at an inner optical map
       //The reentrant tube has an outer radius of 95 cm, and the circumradius of the 12-sided shield is 207.055 cm
-      //G4double radius = (3.25 - 2.1)*rndm(generator) + 2.1;//Good for the outer map sims
-      G4double radius = (2.07055 - 0.95)*rndm(generator) + 0.95;//Hopefully works for the inner map sims
+      G4double radius = (3.5 - 2.1)*rndm(generator) + 2.1;//Good for the outer map sims
+      //G4double radius = (2.07055 - 0.95)*rndm(generator) + 0.95;//Works for the inner map sims
       //Right now the shield panel extends from z values -2.180 to 1.020 m
       //08/12/24 update for inner map sims: z is now 10 cm smaller in each direction
       G4double z = (0.920 + 2.080)*rndm(generator) - 2.080;
@@ -327,8 +327,9 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 	    correctvolume = true;
 	  else
 	    {
-	      z = (0.920 + 2.080)*rndm(generator) - 2.080;
-	      radius = (2.07055 - 0.95)*rndm(generator) + 0.95;
+	      z = (0.920 + 2.080)*rndm(generator) - 2.080;//Both maps
+	      //radius = (2.07055 - 0.95)*rndm(generator) + 0.95;//Inner maps
+	      radius = (3.5 - 2.1)*rndm(generator) + 2.1; //Outer maps
 	      phi = CLHEP::twopi * rndm(generator);
 	      x = radius*cos(phi);
 	      y = radius*sin(phi);
@@ -935,39 +936,48 @@ void WLGDPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
       std::istringstream iss(line);
 
       double num;
-      int numberofgammas = 0;
+      int numberofgammas   = 0;
       int numberofcaptures = 0;
+      int valuecounter     = 0;
 
       ResetCapture();//Just in case
 
 
       while(iss >> num)//Line-by-line
 	{
-
+	  valuecounter++;
 	  //The order of numbers in the line is:
 
-	  //numberofcaptures  ArGammaX/Y/Z  numberofgammas  ArGammaE1/2/etc  ArGammaX/Y/Z...
+	  //numberofcaptures  ArGammaT ArGammaX/Y/Z  numberofgammas  ArGammaE1/2/etc  ArGammaX/Y/Z...
 
 	  //This loop uses a trick where the value (or lack thereof) implicitly tracks the
 	  //position in the line. If a value is 0, it must be the next thing to be read.
 
 	  //We use numberofgammas to determine when the current capture is
 	  //going to be done and then we begin fresh with the next capture
-	      
-	  if(!numberofcaptures)
+	  switch (valuecounter)
+	    {
+	    case 1:
 	    numberofcaptures = num;
-	  else if(!ArGammaT)
+	    break;
+	    case 2:
 	    ArGammaT = num;
-	  else if(!ArGammaX)
+	    break;
+	    case 3:
 	    ArGammaX = num;
-	  else if(!ArGammaY)
-	    ArGammaY = num;	      
-	  else if(!ArGammaZ)
+	    break;
+	    case 4:
+	    ArGammaY = num;
+	    break;
+	    case 5:
 	    ArGammaZ = num;
-	  else if(!numberofgammas)
-	    numberofgammas = num;	      
+	    break;
+	    case 6:
+	    numberofgammas = num;
+	    break;
+	    }
 
-	  //G4cout << numberofcaptures << "  " << ArGammaX << "  " << ArGammaY << "  " << ArGammaZ << "  " << numberofgammas << "  " << ArGammaE << "  " << G4endl;
+	  //G4cout << numberofcaptures << "  " << ArGammaT << "  " << ArGammaX << "  " << ArGammaY << "  " << ArGammaZ << "  " << numberofgammas << "  " << ArGammaE << "  " << G4endl;
 	  
 	  while(numberofgammas > 0)
 	    {//Still more gammas in this neutron capture
