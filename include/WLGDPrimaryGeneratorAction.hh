@@ -140,6 +140,7 @@ private:
   G4double           ArGammaY = 0;
   G4double           ArGammaZ = 0;
   G4double           ArGammaE = 0;
+  G4int              valuecounter = 1;
 
   std::vector<G4String> ListOfMUSUNFiles;
   

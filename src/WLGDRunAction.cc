@@ -22,7 +22,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
 
   // Create directories
   analysisManager->SetVerboseLevel(1);
-  analysisManager->SetNtupleMerging(true);
+  analysisManager->SetNtupleMerging(false);
   //Warning: SetNtupleMerging can cause issues with outputs that are not thread-safe!
 
   // -- write out some branches only if the information is also stored
@@ -39,7 +39,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleDColumn("Hitxloc", fEventAction->GetHitxLoc());
   analysisManager->CreateNtupleDColumn("Hityloc", fEventAction->GetHityLoc());
   analysisManager->CreateNtupleDColumn("Hitzloc", fEventAction->GetHitzLoc());
-
+  */
   analysisManager->CreateNtupleDColumn("Muonxloc", fEventAction->GetMuonxLoc());
   analysisManager->CreateNtupleDColumn("Muonyloc", fEventAction->GetMuonyLoc());
   analysisManager->CreateNtupleDColumn("Muonzloc", fEventAction->GetMuonzLoc());
@@ -47,7 +47,7 @@ WLGDRunAction::WLGDRunAction(WLGDEventAction* eventAction, G4String name)
   analysisManager->CreateNtupleDColumn("Muonymom", fEventAction->GetMuonyMom());
   analysisManager->CreateNtupleDColumn("Muonzmom", fEventAction->GetMuonzMom());
   analysisManager->CreateNtupleDColumn("MuonEnergy", fEventAction->GetMuonEnergy());
-
+  /*
   // Edit: 2021/04/07 by Moritz Neuberger
   // Adding additional outputs to further investigate situations in which Ge-77 is
   // produced
